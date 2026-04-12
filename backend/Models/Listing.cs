@@ -15,7 +15,7 @@ public class Listing
     public string? DescriptionFr { get; set; }
     public ListingLanguage Language { get; set; } = ListingLanguage.EN;
 
-    public RoleType RoleType { get; set; }
+    public ICollection<RoleType> RoleTypes { get; set; } = new List<RoleType>();
     public Province Province { get; set; }
     public string Community { get; set; } = string.Empty;
     public string ContractLength { get; set; } = string.Empty;

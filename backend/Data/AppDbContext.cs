@@ -71,8 +71,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasConversion<string>();
 
         modelBuilder.Entity<Listing>()
-            .Property(l => l.RoleType)
-            .HasConversion<string>();
+            .Property(l => l.RoleTypes)
+            .HasConversion(
+                v => string.Join(',', v.Select(r => r.ToString())),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                       .Select(Enum.Parse<RoleType>).ToList()
+            )
+            .Metadata.SetValueComparer(
+                new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<ICollection<RoleType>>(
+                    (a, b) => a!.SequenceEqual(b!),
+                    v => v.Aggregate(0, (a, r) => HashCode.Combine(a, r.GetHashCode())),
+                    v => v.ToList()
+                )
+            );
 
         modelBuilder.Entity<Listing>()
             .Property(l => l.Language)
@@ -155,17 +166,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<AlertSubscription>()
             .Property(a => a.Provinces)
             .HasConversion(
-                v => string.Join(',', v.Select(p => p.ToString())),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                       .Select(Enum.Parse<Province>).ToArray()
+                v => v == null ? null : string.Join(',', v.Select(p => p.ToString())),
+                v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                       .Select(Enum.Parse<Province>).ToList()
             );
 
         modelBuilder.Entity<AlertSubscription>()
             .Property(a => a.RoleTypes)
             .HasConversion(
-                v => string.Join(',', v.Select(r => r.ToString())),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                       .Select(Enum.Parse<RoleType>).ToArray()
+                v => v == null ? null : string.Join(',', v.Select(r => r.ToString())),
+                v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                       .Select(Enum.Parse<RoleType>).ToList()
+            );
+
+        modelBuilder.Entity<AlertSubscription>()
+            .Property(a => a.Languages)
+            .HasConversion(
+                v => v == null ? null : string.Join(',', v.Select(l => l.ToString())),
+                v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                       .Select(Enum.Parse<ListingLanguage>).ToList()
+            );
+
+        modelBuilder.Entity<AlertSubscription>()
+            .Property(a => a.ContractLengths)
+            .HasConversion(
+                v => v == null ? null : string.Join('|', v),
+                v => v == null ? null : v.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList()
             );
 
         // ── NurseEmailConsent ─────────────────────────────────────────────────

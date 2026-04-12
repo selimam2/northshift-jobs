@@ -32,7 +32,7 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
             <h3>{listing.Title}</h3>
             <ul>
                 <li><strong>Location:</strong> {listing.Community}, {listing.Province}</li>
-                <li><strong>Role:</strong> {listing.RoleType}</li>
+                <li><strong>Role:</strong> {string.Join(", ", listing.RoleTypes)}</li>
                 <li><strong>Contract:</strong> {listing.ContractLength}</li>
                 <li><strong>Housing:</strong> {(listing.HousingProvided ? "Provided" : "Not provided")}</li>
                 <li><strong>Travel:</strong> {(listing.TravelCovered ? "Covered" : "Not covered")}</li>
@@ -73,6 +73,21 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
             """;
 
         await SendEmailAsync(accountManager.Email, subject, body);
+    }
+
+    public async Task SendInviteEmailAsync(Recruiter recruiter, Organization org)
+    {
+        var subject = $"You've been invited to join {org.Name} on NorthShift Jobs";
+        var body = $"""
+            <h2>You're invited!</h2>
+            <p>Hi {recruiter.Name},</p>
+            <p>You've been invited to join <strong>{org.Name}</strong> as a recruiter on NorthShift Jobs.</p>
+            <p><a href="{config["Frontend:Url"]}/auth/accept-invite?token={recruiter.InviteToken}">Accept your invitation</a></p>
+            <p>This link will expire in 7 days.</p>
+            <p>NorthShift Jobs</p>
+            """;
+
+        await SendEmailAsync(recruiter.Email, subject, body);
     }
 
     private async Task SendEmailAsync(string to, string subject, string htmlBody)
