@@ -169,7 +169,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 v => v == null ? null : string.Join(',', v.Select(p => p.ToString())),
                 v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                        .Select(Enum.Parse<Province>).ToList()
-            );
+            )
+            .Metadata.SetValueComparer(NullableListComparer<Province>());
 
         modelBuilder.Entity<AlertSubscription>()
             .Property(a => a.RoleTypes)
@@ -177,7 +178,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 v => v == null ? null : string.Join(',', v.Select(r => r.ToString())),
                 v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                        .Select(Enum.Parse<RoleType>).ToList()
-            );
+            )
+            .Metadata.SetValueComparer(NullableListComparer<RoleType>());
 
         modelBuilder.Entity<AlertSubscription>()
             .Property(a => a.Languages)
@@ -185,17 +187,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 v => v == null ? null : string.Join(',', v.Select(l => l.ToString())),
                 v => v == null ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                        .Select(Enum.Parse<ListingLanguage>).ToList()
-            );
+            )
+            .Metadata.SetValueComparer(NullableListComparer<ListingLanguage>());
 
         modelBuilder.Entity<AlertSubscription>()
             .Property(a => a.ContractLengths)
             .HasConversion(
                 v => v == null ? null : string.Join('|', v),
                 v => v == null ? null : v.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList()
-            );
+            )
+            .Metadata.SetValueComparer(NullableListComparer<string>());
 
-        // ── NurseEmailConsent ─────────────────────────────────────────────────
+        // ── NurseEmailConsent ────────────────────────────────────────────────
         modelBuilder.Entity<NurseEmailConsent>()
             .HasIndex(n => n.Email);
     }
+
+    private static Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<T>?> NullableListComparer<T>() =>
+        new(
+            (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
+            v => v == null ? 0 : v.Aggregate(0, (a, i) => HashCode.Combine(a, i!.GetHashCode())),
+            v => v == null ? null : v.ToList()
+        );
 }
