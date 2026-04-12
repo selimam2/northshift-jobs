@@ -31,10 +31,12 @@ export default function DashboardPage() {
           {t("title")}
         </h1>
         <div className="flex items-center gap-3">
-          <Button size="sm" className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            {t("newListing")}
-          </Button>
+          <Link href={`/${locale}/dashboard/listings/new`}>
+            <Button size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              {t("newListing")}
+            </Button>
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
@@ -76,10 +78,12 @@ export default function DashboardPage() {
               <div className="py-12 text-center">
                 <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
                 <p className="text-muted-foreground">{t("noListings")}</p>
-                <Button size="sm" className="mt-4 gap-1.5">
-                  <Plus className="h-4 w-4" />
-                  {t("newListing")}
-                </Button>
+                <Link href={`/${locale}/dashboard/listings/new`}>
+                  <Button size="sm" className="mt-4 gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    {t("newListing")}
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

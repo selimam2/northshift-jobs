@@ -27,6 +27,7 @@ import {
   Calendar,
   Globe,
   CheckCircle2,
+  Paperclip,
 } from "lucide-react";
 
 const PROVINCES: Province[] = [
@@ -62,6 +63,7 @@ export default function JobDetailPage({
   const [licenceExpiry, setLicenceExpiry] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [consent, setConsent] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -80,8 +82,17 @@ export default function JobDetailPage({
     setSubmitting(true);
     setError("");
     try {
-      await api.applications.submit({
-        listingId: listing.id,
+      // 1. Upload resume to S3
+      if (!resumeFile) {
+        setError(t("resumeRequired"));
+        return;
+      }
+      const { uploadUrl, s3Key } = await api.applications.getUploadUrl(resumeFile.name);
+      await api.applications.uploadResume(uploadUrl, resumeFile);
+      const resumeS3Key = s3Key;
+
+      // 2. Submit application
+      await api.applications.submit(listing.id, {
         applicantName: name,
         applicantEmail: email,
         applicantPhone: phone,
@@ -96,6 +107,7 @@ export default function JobDetailPage({
           : [],
         coverLetter: coverLetter || undefined,
         emailConsent: consent,
+        resumeS3Key,
       });
       setSubmitted(true);
     } catch (err) {
@@ -126,11 +138,8 @@ export default function JobDetailPage({
     );
   }
 
-  const title = locale === "fr" && listing.titleFr ? listing.titleFr : listing.title;
-  const description =
-    locale === "fr" && listing.descriptionFr
-      ? listing.descriptionFr
-      : listing.description;
+  const title = (locale === "fr" ? listing.titleFr ?? listing.titleEn : listing.titleEn ?? listing.titleFr) ?? "";
+  const description = (locale === "fr" ? listing.descriptionFr ?? listing.descriptionEn : listing.descriptionEn ?? listing.descriptionFr) ?? "";
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -318,6 +327,25 @@ export default function JobDetailPage({
                         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                         placeholder="Brief intro…"
                       />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        {t("resume")}
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors">
+                        <Paperclip className="h-4 w-4 shrink-0" />
+                        <span className="truncate">
+                          {resumeFile ? resumeFile.name : t("resume")}
+                        </span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          className="sr-only"
+                          onChange={(e) => setResumeFile(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
+                      <p className="mt-1 text-xs text-muted-foreground">{t("resumeNote")}</p>
                     </div>
 
                     <label className="flex items-start gap-2 cursor-pointer">

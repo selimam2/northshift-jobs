@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { MapPin } from "lucide-react";
@@ -61,7 +63,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href={`/${locale}/login`}
+                  href={`/${locale}/pricing`}
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   {t("pricing")}
@@ -78,7 +80,7 @@ export default function Footer() {
             <ul className="mt-3 space-y-2">
               <li>
                 <Link
-                  href={`/${locale}`}
+                  href={`/${locale}/about`}
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   {t("about")}
@@ -86,7 +88,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href={`/${locale}`}
+                  href={`/${locale}/contact`}
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   {t("contact")}
@@ -94,7 +96,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href={`/${locale}`}
+                  href={`/${locale}/privacy`}
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   {t("privacy")}

@@ -4,9 +4,9 @@ namespace NorthShift.Api.DTOs.Listings;
 
 public class UpdateListingRequest
 {
-    public string? Title { get; set; }
+    public string? TitleEn { get; set; }
     public string? TitleFr { get; set; }
-    public string? Description { get; set; }
+    public string? DescriptionEn { get; set; }
     public string? DescriptionFr { get; set; }
     public ListingLanguage? Language { get; set; }
     public RoleType? RoleType { get; set; }

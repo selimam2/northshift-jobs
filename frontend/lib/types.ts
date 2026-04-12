@@ -12,9 +12,9 @@ export type LanguagePreference = "English" | "French";
 export interface Listing {
   id: string;
   slug: string;
-  title: string;
+  titleEn?: string;
   titleFr?: string;
-  description: string;
+  descriptionEn?: string;
   descriptionFr?: string;
   community: string;
   province: Province;
@@ -25,7 +25,7 @@ export interface Listing {
   contractLength?: string;
   startDate?: string;
   status: ListingStatus;
-  isFeatured: boolean;
+  featured: boolean;
   orgName: string;
   createdAt: string;
 }
@@ -54,6 +54,24 @@ export interface SubmitApplicationRequest {
   licences: { province: Province; licenceNumber?: string; expiry?: string }[];
   coverLetter?: string;
   emailConsent: boolean;
+  resumeS3Key?: string;
+}
+
+export interface CreateListingRequest {
+  titleEn?: string;
+  titleFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
+  language: ListingLanguage;
+  roleTypes: RoleType[];
+  province: Province;
+  community: string;
+  contractLength: string;
+  startDate?: string;
+  payMin?: number;
+  payMax?: number;
+  housingProvided: boolean;
+  travelCovered: boolean;
 }
 
 export interface SubscribeRequest {

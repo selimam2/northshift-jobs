@@ -11,8 +11,25 @@ namespace NorthShift.Api.Controllers;
 
 [ApiController]
 [Route("api/applications")]
-public class ApplicationsController(AppDbContext db, EmailService emailService) : ControllerBase
+public class ApplicationsController(AppDbContext db, EmailService emailService, S3Service s3) : ControllerBase
 {
+    // Public — get a presigned S3 upload URL (call before submitting application)
+    [HttpGet("presigned-upload")]
+    public IActionResult GetUploadUrl([FromQuery] string filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+            return BadRequest(new { error = "filename is required" });
+
+        var ext = Path.GetExtension(filename).ToLowerInvariant();
+        if (ext is not (".pdf" or ".doc" or ".docx"))
+            return BadRequest(new { error = "Only PDF, DOC, and DOCX files are accepted" });
+
+        var s3Key = $"resumes/{Guid.NewGuid()}{ext}";
+        var uploadUrl = s3.GenerateUploadUrl(s3Key, TimeSpan.FromMinutes(10));
+
+        return Ok(new { uploadUrl, s3Key });
+    }
+
     // Public — nurse submits application (no account required)
     [HttpPost("{listingId}")]
     public async Task<IActionResult> Submit(Guid listingId, SubmitApplicationRequest req)
@@ -30,7 +47,7 @@ public class ApplicationsController(AppDbContext db, EmailService emailService) 
             ApplicantEmail = req.ApplicantEmail,
             CoverMessage = req.CoverMessage,
             AvailabilityDate = req.AvailabilityDate,
-            ResumeS3Key = string.Empty, // set after S3 upload
+            ResumeS3Key = req.ResumeS3Key,
             Licences = req.Licences.Select(l => new Licence
             {
                 Province = l.Province,
@@ -101,7 +118,7 @@ public class ApplicationsController(AppDbContext db, EmailService emailService) 
                 a.AvailabilityDate,
                 a.CreatedAt,
                 AssignedTo = a.AssignedTo != null ? a.AssignedTo.Name : null,
-                ListingTitle = a.Listing.Title,
+                ListingTitleEn = a.Listing.TitleEn, ListingTitleFr = a.Listing.TitleFr,
                 a.ListingId
             })
             .ToListAsync();
@@ -134,6 +151,24 @@ public class ApplicationsController(AppDbContext db, EmailService emailService) 
         }
 
         return Ok(application);
+    }
+
+    // Org members — get a short-lived download URL for the applicant's resume
+    [HttpGet("{id}/resume"), Authorize(Roles = "AccountManager,Recruiter")]
+    public async Task<IActionResult> GetResumeUrl(Guid id)
+    {
+        var orgId = Guid.Parse(User.FindFirstValue("org_id")!);
+
+        var application = await db.Applications
+            .Include(a => a.Listing)
+            .FirstOrDefaultAsync(a => a.Id == id && a.Listing.OrgId == orgId);
+
+        if (application is null) return NotFound();
+        if (string.IsNullOrEmpty(application.ResumeS3Key))
+            return NotFound(new { error = "No resume on file" });
+
+        var url = s3.GenerateDownloadUrl(application.ResumeS3Key, TimeSpan.FromMinutes(15));
+        return Ok(new { url });
     }
 
     [HttpPatch("{id}/status"), Authorize(Roles = "AccountManager,Recruiter")]

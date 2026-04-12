@@ -260,8 +260,7 @@ namespace NorthShift.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
+                    b.Property<string>("DescriptionEn")
                         .HasColumnType("text");
 
                     b.Property<string>("DescriptionFr")
@@ -316,8 +315,7 @@ namespace NorthShift.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
+                    b.Property<string>("TitleEn")
                         .HasColumnType("text");
 
                     b.Property<string>("TitleFr")
@@ -339,7 +337,10 @@ namespace NorthShift.Api.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Listings");
+                    b.ToTable("Listings", t =>
+                        {
+                            t.HasCheckConstraint("CK_Listings_LanguageContentMatch", "(\"Language\" = 'English'   AND \"TitleEn\" IS NOT NULL AND \"DescriptionEn\" IS NOT NULL)\nOR (\"Language\" = 'French'    AND \"TitleFr\" IS NOT NULL AND \"DescriptionFr\" IS NOT NULL)\nOR (\"Language\" = 'Bilingual' AND \"TitleEn\" IS NOT NULL AND \"DescriptionEn\" IS NOT NULL\n                             AND \"TitleFr\" IS NOT NULL AND \"DescriptionFr\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("NorthShift.Api.Models.NurseEmailConsent", b =>

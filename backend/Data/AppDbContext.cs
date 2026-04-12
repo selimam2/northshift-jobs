@@ -59,6 +59,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .IsUnique();
 
         modelBuilder.Entity<Listing>()
+            .ToTable(t => t.HasCheckConstraint("CK_Listings_LanguageContentMatch",
+                """
+                ("Language" = 'English'   AND "TitleEn" IS NOT NULL AND "DescriptionEn" IS NOT NULL)
+                OR ("Language" = 'French'    AND "TitleFr" IS NOT NULL AND "DescriptionFr" IS NOT NULL)
+                OR ("Language" = 'Bilingual' AND "TitleEn" IS NOT NULL AND "DescriptionEn" IS NOT NULL
+                                             AND "TitleFr" IS NOT NULL AND "DescriptionFr" IS NOT NULL)
+                """));
+
+        modelBuilder.Entity<Listing>()
             .Property(l => l.PayMin)
             .HasPrecision(10, 2);
 

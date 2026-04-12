@@ -2,6 +2,7 @@ import type {
   Listing,
   ListingFilter,
   PagedResult,
+  CreateListingRequest,
   SubmitApplicationRequest,
   SubscribeRequest,
 } from "./types";
@@ -25,7 +26,7 @@ async function apiFetch<T>(
 
 export const api = {
   listings: {
-    list(filter: ListingFilter = {}): Promise<PagedResult<Listing>> {
+    async list(filter: ListingFilter = {}): Promise<PagedResult<Listing>> {
       const params = new URLSearchParams();
       if (filter.provinces?.length)
         filter.provinces.forEach((p) => params.append("provinces", p));
@@ -40,17 +41,41 @@ export const api = {
       if (filter.page) params.set("page", String(filter.page));
       if (filter.pageSize) params.set("pageSize", String(filter.pageSize));
       const qs = params.toString();
-      return apiFetch(`/api/listings${qs ? `?${qs}` : ""}`);
+      const raw = await apiFetch<{ total: number; page: number; pageSize: number; listings: Listing[] }>(
+        `/api/listings${qs ? `?${qs}` : ""}`,
+      );
+      return { items: raw.listings, totalCount: raw.total, page: raw.page, pageSize: raw.pageSize };
     },
 
     get(slug: string): Promise<Listing> {
       return apiFetch(`/api/listings/${slug}`);
     },
+
+    create(data: CreateListingRequest, token: string): Promise<{ id: string; slug: string }> {
+      return apiFetch("/api/listings", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
   },
 
   applications: {
-    submit(data: SubmitApplicationRequest): Promise<{ id: string }> {
-      return apiFetch("/api/applications", {
+    async getUploadUrl(filename: string): Promise<{ uploadUrl: string; s3Key: string }> {
+      return apiFetch(`/api/applications/presigned-upload?filename=${encodeURIComponent(filename)}`);
+    },
+
+    async uploadResume(uploadUrl: string, file: File): Promise<void> {
+      const res = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": "application/octet-stream" },
+      });
+      if (!res.ok) throw new Error("Resume upload failed");
+    },
+
+    submit(listingId: string, data: Omit<SubmitApplicationRequest, "listingId">): Promise<{ id: string }> {
+      return apiFetch(`/api/applications/${listingId}`, {
         method: "POST",
         body: JSON.stringify(data),
       });

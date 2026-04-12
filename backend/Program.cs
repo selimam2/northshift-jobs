@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +37,12 @@ builder.Services.AddAuthorization();
 // Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
+// AWS
+var awsRegion = builder.Configuration["AWS:Region"] ?? "us-east-1";
+builder.Services.AddSingleton<IAmazonS3>(_ =>
+    new AmazonS3Client(Amazon.RegionEndpoint.GetBySystemName(awsRegion)));
+builder.Services.AddScoped<S3Service>();
+
 // Services
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
@@ -49,27 +56,36 @@ builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy =>
     {
         policy.WithOrigins(
-            builder.Configuration["Frontend:Url"] ?? "http://localhost:3000"
+            builder.Configuration["Frontend:Url"] ?? "http://localhost:3000",
+            "http://192.168.40.136:3000"
         )
         .AllowAnyHeader()
         .AllowAnyMethod();
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Always run migrations on startup (idempotent)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    if (app.Environment.IsProduction())
+        await NorthShift.Api.Data.DemoSeeder.SeedAsync(db);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
 }
 
 app.UseCors("Frontend");

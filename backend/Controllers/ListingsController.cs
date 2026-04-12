@@ -42,7 +42,7 @@ public class ListingsController(AppDbContext db) : ControllerBase
             {
                 l.Id,
                 l.Slug,
-                l.Title,
+                l.TitleEn,
                 l.TitleFr,
                 l.RoleTypes,
                 l.Province,
@@ -67,8 +67,30 @@ public class ListingsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetBySlug(string slug)
     {
         var listing = await db.Listings
-            .Include(l => l.Org)
-            .FirstOrDefaultAsync(l => l.Slug == slug && l.Status == ListingStatus.Active);
+            .Where(l => l.Slug == slug && l.Status == ListingStatus.Active)
+            .Select(l => new
+            {
+                l.Id,
+                l.Slug,
+                l.TitleEn,
+                l.TitleFr,
+                l.DescriptionEn,
+                l.DescriptionFr,
+                l.RoleTypes,
+                l.Province,
+                l.Community,
+                l.ContractLength,
+                l.StartDate,
+                l.PayMin,
+                l.PayMax,
+                l.HousingProvided,
+                l.TravelCovered,
+                l.Featured,
+                l.Language,
+                l.CreatedAt,
+                OrgName = l.Org.Name
+            })
+            .FirstOrDefaultAsync();
 
         if (listing is null) return NotFound();
         return Ok(listing);
@@ -87,13 +109,16 @@ public class ListingsController(AppDbContext db) : ControllerBase
         if (activeCount >= org!.ListingQuota)
             return BadRequest(new { error = $"Active listing limit reached for your {org.Tier} plan" });
 
+        var validationError = ValidateLanguageContent(req.Language, req.TitleEn, req.TitleFr, req.DescriptionEn, req.DescriptionFr);
+        if (validationError is not null) return BadRequest(new { error = validationError });
+
         var listing = new Listing
         {
             OrgId = orgId,
             PostedByUserId = userId,
-            Title = req.Title,
+            TitleEn = req.TitleEn,
             TitleFr = req.TitleFr,
-            Description = req.Description,
+            DescriptionEn = req.DescriptionEn,
             DescriptionFr = req.DescriptionFr,
             Language = req.Language,
             RoleTypes = req.RoleTypes,
@@ -106,7 +131,7 @@ public class ListingsController(AppDbContext db) : ControllerBase
             HousingProvided = req.HousingProvided,
             TravelCovered = req.TravelCovered,
             Status = ListingStatus.PendingApproval,
-            Slug = GenerateSlug(req.Title, req.Community)
+            Slug = GenerateSlug(req.TitleEn ?? req.TitleFr!, req.Community)
         };
 
         db.Listings.Add(listing);
@@ -131,11 +156,16 @@ public class ListingsController(AppDbContext db) : ControllerBase
                 return Forbid();
         }
 
-        if (req.Title is not null) listing.Title = req.Title;
+        // Apply field updates first, then validate the resulting state
+        if (req.TitleEn is not null) listing.TitleEn = req.TitleEn;
         if (req.TitleFr is not null) listing.TitleFr = req.TitleFr;
-        if (req.Description is not null) listing.Description = req.Description;
+        if (req.DescriptionEn is not null) listing.DescriptionEn = req.DescriptionEn;
         if (req.DescriptionFr is not null) listing.DescriptionFr = req.DescriptionFr;
         if (req.Language.HasValue) listing.Language = req.Language.Value;
+
+        var validationError = ValidateLanguageContent(listing.Language, listing.TitleEn, listing.TitleFr, listing.DescriptionEn, listing.DescriptionFr);
+        if (validationError is not null) return BadRequest(new { error = validationError });
+
         if (req.Province.HasValue) listing.Province = req.Province.Value;
         if (req.Community is not null) listing.Community = req.Community;
         if (req.ContractLength is not null) listing.ContractLength = req.ContractLength;
@@ -169,6 +199,20 @@ public class ListingsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    private static string? ValidateLanguageContent(
+        ListingLanguage language, string? titleEn, string? titleFr, string? descEn, string? descFr) =>
+        language switch
+        {
+            ListingLanguage.English when string.IsNullOrWhiteSpace(titleEn) || string.IsNullOrWhiteSpace(descEn)
+                => "English title and description are required for English listings.",
+            ListingLanguage.French when string.IsNullOrWhiteSpace(titleFr) || string.IsNullOrWhiteSpace(descFr)
+                => "French title and description are required for French listings.",
+            ListingLanguage.Bilingual when (string.IsNullOrWhiteSpace(titleEn) || string.IsNullOrWhiteSpace(descEn)
+                                        || string.IsNullOrWhiteSpace(titleFr) || string.IsNullOrWhiteSpace(descFr))
+                => "Both English and French title and description are required for Bilingual listings.",
+            _ => null
+        };
 
     private static string GenerateSlug(string title, string community)
     {

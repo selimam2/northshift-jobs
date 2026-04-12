@@ -21,6 +21,10 @@ public class SubmitApplicationRequest
     public List<LicenceRequest> Licences { get; set; } = new();
 
     public bool ConsentToAlerts { get; set; }
+
+    /// <summary>S3 key returned by the presigned-upload endpoint after the file is uploaded.</summary>
+    [Required]
+    public string ResumeS3Key { get; set; } = string.Empty;
 }
 
 public class LicenceRequest

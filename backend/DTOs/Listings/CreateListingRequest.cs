@@ -5,17 +5,14 @@ namespace NorthShift.Api.DTOs.Listings;
 
 public class CreateListingRequest
 {
-    [Required]
-    public string Title { get; set; } = string.Empty;
-
+    public string? TitleEn { get; set; }
     public string? TitleFr { get; set; }
 
-    [Required]
-    public string Description { get; set; } = string.Empty;
-
+    public string? DescriptionEn { get; set; }
     public string? DescriptionFr { get; set; }
 
-    public ListingLanguage Language { get; set; } = ListingLanguage.EN;
+    [Required]
+    public ListingLanguage Language { get; set; }
 
     [Required, MinLength(1)]
     public List<RoleType> RoleTypes { get; set; } = new();

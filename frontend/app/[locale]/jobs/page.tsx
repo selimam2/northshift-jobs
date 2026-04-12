@@ -196,7 +196,7 @@ function ListingCard({
   locale: string;
   t: ReturnType<typeof useTranslations<"Jobs">>;
 }) {
-  const title = locale === "fr" && listing.titleFr ? listing.titleFr : listing.title;
+  const title = (locale === "fr" ? listing.titleFr ?? listing.titleEn : listing.titleEn ?? listing.titleFr) ?? "";
 
   const payLabel =
     listing.payMin && listing.payMax
@@ -208,7 +208,7 @@ function ListingCard({
   return (
     <Link href={`/${locale}/jobs/${listing.slug}`}>
       <Card className="h-full transition-colors hover:border-primary/50 hover:bg-card/80 cursor-pointer">
-        {listing.isFeatured && (
+        {listing.featured && (
           <div className="rounded-t-lg bg-gradient-to-r from-primary to-accent px-3 py-1 text-xs font-medium text-primary-foreground">
             Featured
           </div>

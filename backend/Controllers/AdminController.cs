@@ -24,7 +24,8 @@ public class AdminController(AppDbContext db, EmailService emailService) : Contr
             {
                 l.Id,
                 l.Slug,
-                l.Title,
+                l.TitleEn,
+                l.TitleFr,
                 l.RoleTypes,
                 l.Province,
                 l.Community,

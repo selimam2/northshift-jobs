@@ -1,6 +1,6 @@
 namespace NorthShift.Api.Models;
 
-public enum LanguagePreference { EN, FR }
+public enum LanguagePreference { English, French }
 
 public class AlertSubscription
 {
@@ -14,7 +14,7 @@ public class AlertSubscription
     public List<string>? ContractLengths { get; set; }
 
     // Language the alert email itself is sent in
-    public LanguagePreference LanguagePref { get; set; } = LanguagePreference.EN;
+    public LanguagePreference LanguagePref { get; set; } = LanguagePreference.English;
 
     public string UnsubscribeToken { get; set; } = Guid.NewGuid().ToString("N");
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

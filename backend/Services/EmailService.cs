@@ -10,11 +10,11 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
 
     public async Task SendListingConfirmationAsync(OrgUser postedBy, Listing listing)
     {
-        var subject = $"Your listing is live: {listing.Title}";
+        var subject = $"Your listing is live: {listing.TitleEn ?? listing.TitleFr}";
         var body = $"""
             <h2>Your job listing is now live!</h2>
             <p>Hi {postedBy.Name},</p>
-            <p>Your listing <strong>{listing.Title}</strong> in {listing.Community}, {listing.Province} is now active.</p>
+            <p>Your listing <strong>{listing.TitleEn ?? listing.TitleFr}</strong> in {listing.Community}, {listing.Province} is now active.</p>
             <p>It will remain live until {listing.ExpiresAt:MMMM d, yyyy}.</p>
             <p><a href="{config["Frontend:Url"]}/jobs/{listing.Slug}">View your listing</a></p>
             <p>Thanks,<br/>NorthShift Jobs</p>
@@ -25,11 +25,11 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
 
     public async Task SendAlertEmailAsync(string toEmail, Listing listing, string unsubscribeToken)
     {
-        var subject = $"New nursing contract: {listing.Title} — {listing.Community}, {listing.Province}";
+        var subject = $"New nursing contract: {listing.TitleEn ?? listing.TitleFr} — {listing.Community}, {listing.Province}";
         var body = $"""
             <h2>New contract match for you</h2>
             <p>A new listing matches your alert preferences:</p>
-            <h3>{listing.Title}</h3>
+            <h3>{listing.TitleEn ?? listing.TitleFr}</h3>
             <ul>
                 <li><strong>Location:</strong> {listing.Community}, {listing.Province}</li>
                 <li><strong>Role:</strong> {string.Join(", ", listing.RoleTypes)}</li>
@@ -49,11 +49,11 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
 
     public async Task SendApplicationConfirmationAsync(Application application, Listing listing)
     {
-        var subject = $"Application received — {listing.Title}";
+        var subject = $"Application received — {listing.TitleEn ?? listing.TitleFr}";
         var body = $"""
             <h2>We received your application!</h2>
             <p>Hi {application.ApplicantName},</p>
-            <p>Your application for <strong>{listing.Title}</strong> in {listing.Community}, {listing.Province} has been received.</p>
+            <p>Your application for <strong>{listing.TitleEn ?? listing.TitleFr}</strong> in {listing.Community}, {listing.Province} has been received.</p>
             <p>The employer will be in touch if your profile is a match.</p>
             <p>Thanks,<br/>NorthShift Jobs</p>
             """;
@@ -63,11 +63,11 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
 
     public async Task SendNewApplicationNotificationAsync(AccountManager accountManager, Application application, Listing listing)
     {
-        var subject = $"New application: {listing.Title}";
+        var subject = $"New application: {listing.TitleEn ?? listing.TitleFr}";
         var body = $"""
             <h2>New application received</h2>
             <p>Hi {accountManager.Name},</p>
-            <p><strong>{application.ApplicantName}</strong> has applied for <strong>{listing.Title}</strong>.</p>
+            <p><strong>{application.ApplicantName}</strong> has applied for <strong>{listing.TitleEn ?? listing.TitleFr}</strong>.</p>
             <p><a href="{config["Frontend:Url"]}/dashboard/applications/{application.Id}">View application</a></p>
             <p>NorthShift Jobs</p>
             """;

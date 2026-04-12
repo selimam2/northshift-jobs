@@ -1,19 +1,19 @@
 namespace NorthShift.Api.Models;
 
 public enum ListingStatus { Draft, PendingApproval, Active, Expired, Closed }
-public enum RoleType { RN, LPN, NP, Other }
-public enum ListingLanguage { EN, FR, Both }
+public enum RoleType { RN, RPN, LPN, NP, CNA, Other }
+public enum ListingLanguage { English, French, Bilingual }
 
 public class Listing
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Slug { get; set; } = string.Empty;
 
-    public string Title { get; set; } = string.Empty;
+    public string? TitleEn { get; set; }
     public string? TitleFr { get; set; }
-    public string Description { get; set; } = string.Empty;
+    public string? DescriptionEn { get; set; }
     public string? DescriptionFr { get; set; }
-    public ListingLanguage Language { get; set; } = ListingLanguage.EN;
+    public ListingLanguage Language { get; set; } = ListingLanguage.English;
 
     public ICollection<RoleType> RoleTypes { get; set; } = new List<RoleType>();
     public Province Province { get; set; }

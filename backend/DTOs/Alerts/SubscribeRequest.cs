@@ -14,5 +14,5 @@ public class SubscribeRequest
     public ListingFilter Preferences { get; set; } = new();
 
     // Language the alert email is sent in
-    public LanguagePreference LanguagePref { get; set; } = LanguagePreference.EN;
+    public LanguagePreference LanguagePref { get; set; } = LanguagePreference.English;
 }
