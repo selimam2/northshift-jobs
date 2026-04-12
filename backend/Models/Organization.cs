@@ -15,7 +15,7 @@ public class Organization
     public DateTime? SubscriptionExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<OrgUser> Users { get; set; } = new List<OrgUser>();
     public ICollection<Listing> Listings { get; set; } = new List<Listing>();
 
     public int ListingQuota => Tier switch

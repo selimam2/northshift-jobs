@@ -3,25 +3,24 @@ using Resend;
 
 namespace NorthShift.Api.Services;
 
-public class EmailService(IConfiguration config, ILogger<EmailService> logger)
+public class EmailService(IConfiguration config, ILogger<EmailService> logger, IResend resend)
 {
-    private readonly string _apiKey = config["Resend:ApiKey"] ?? string.Empty;
     private readonly string _fromEmail = config["Resend:FromEmail"] ?? "jobs@northshiftjobs.ca";
     private readonly string _fromName = config["Resend:FromName"] ?? "NorthShift Jobs";
 
-    public async Task SendListingConfirmationAsync(Employer employer, Listing listing)
+    public async Task SendListingConfirmationAsync(OrgUser postedBy, Listing listing)
     {
         var subject = $"Your listing is live: {listing.Title}";
         var body = $"""
             <h2>Your job listing is now live!</h2>
-            <p>Hi {employer.Name},</p>
+            <p>Hi {postedBy.Name},</p>
             <p>Your listing <strong>{listing.Title}</strong> in {listing.Community}, {listing.Province} is now active.</p>
             <p>It will remain live until {listing.ExpiresAt:MMMM d, yyyy}.</p>
             <p><a href="{config["Frontend:Url"]}/jobs/{listing.Slug}">View your listing</a></p>
             <p>Thanks,<br/>NorthShift Jobs</p>
             """;
 
-        await SendEmailAsync(employer.Email, subject, body);
+        await SendEmailAsync(postedBy.Email, subject, body);
     }
 
     public async Task SendAlertEmailAsync(string toEmail, Listing listing, string unsubscribeToken)
@@ -48,11 +47,38 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger)
         await SendEmailAsync(toEmail, subject, body);
     }
 
+    public async Task SendApplicationConfirmationAsync(Application application, Listing listing)
+    {
+        var subject = $"Application received — {listing.Title}";
+        var body = $"""
+            <h2>We received your application!</h2>
+            <p>Hi {application.ApplicantName},</p>
+            <p>Your application for <strong>{listing.Title}</strong> in {listing.Community}, {listing.Province} has been received.</p>
+            <p>The employer will be in touch if your profile is a match.</p>
+            <p>Thanks,<br/>NorthShift Jobs</p>
+            """;
+
+        await SendEmailAsync(application.ApplicantEmail, subject, body);
+    }
+
+    public async Task SendNewApplicationNotificationAsync(AccountManager accountManager, Application application, Listing listing)
+    {
+        var subject = $"New application: {listing.Title}";
+        var body = $"""
+            <h2>New application received</h2>
+            <p>Hi {accountManager.Name},</p>
+            <p><strong>{application.ApplicantName}</strong> has applied for <strong>{listing.Title}</strong>.</p>
+            <p><a href="{config["Frontend:Url"]}/dashboard/applications/{application.Id}">View application</a></p>
+            <p>NorthShift Jobs</p>
+            """;
+
+        await SendEmailAsync(accountManager.Email, subject, body);
+    }
+
     private async Task SendEmailAsync(string to, string subject, string htmlBody)
     {
         try
         {
-            var client = new ResendClient(_apiKey);
             var message = new EmailMessage
             {
                 From = $"{_fromName} <{_fromEmail}>",
@@ -60,7 +86,7 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger)
                 Subject = subject,
                 HtmlBody = htmlBody
             };
-            await client.EmailSendAsync(message);
+            await resend.EmailSendAsync(message);
         }
         catch (Exception ex)
         {

@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NorthShift.Api.Data;
 using NorthShift.Api.Services;
+using Resend;
 using Stripe;
+using TokenService = NorthShift.Api.Services.TokenService;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +39,9 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 // Services
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddOptions<ResendClientOptions>().Configure(options =>
+    options.ApiToken = builder.Configuration["Resend:ApiKey"] ?? string.Empty);
+builder.Services.AddHttpClient<IResend, ResendClient>();
 
 // CORS — allow Next.js frontend
 builder.Services.AddCors(options =>

@@ -8,19 +8,30 @@ namespace NorthShift.Api.Services;
 
 public class TokenService(IConfiguration config)
 {
-    public string GenerateToken(Employer employer, bool isAdmin = false)
+    public string GenerateToken(AppUser user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiry = DateTime.UtcNow.AddHours(int.Parse(config["Jwt:ExpiryHours"] ?? "24"));
 
-        var claims = new[]
+        var role = user switch
         {
-            new Claim(ClaimTypes.NameIdentifier, employer.Id.ToString()),
-            new Claim(ClaimTypes.Email, employer.Email),
-            new Claim("organization", employer.Organization),
-            new Claim(ClaimTypes.Role, isAdmin ? "Admin" : "Employer")
+            Admin => "Admin",
+            AccountManager => "AccountManager",
+            Recruiter => "Recruiter",
+            _ => "Unknown"
         };
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Name, user.Name),
+            new(ClaimTypes.Role, role),
+        };
+
+        if (user is OrgUser orgUser)
+            claims.Add(new Claim("org_id", orgUser.OrgId.ToString()));
 
         var token = new JwtSecurityToken(
             issuer: config["Jwt:Issuer"],
