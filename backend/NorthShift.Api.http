@@ -1,0 +1,6 @@
+@NorthShift.Api_HostAddress = http://localhost:5120
+
+GET {{NorthShift.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

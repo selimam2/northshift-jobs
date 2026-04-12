@@ -1,0 +1,34 @@
+# .NET
+backend/bin/
+backend/obj/
+*.user
+*.suo
+.vs/
+
+# Secrets — never commit
+backend/appsettings.Development.json
+backend/appsettings.*.json
+!backend/appsettings.json
+
+# Next.js (frontend — not yet scaffolded)
+frontend/node_modules/
+frontend/.next/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Terraform state — contains secrets
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars
+infra/.terraform.lock.hcl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
