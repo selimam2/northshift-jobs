@@ -23,6 +23,11 @@ infra/*.tfstate
 infra/*.tfstate.backup
 infra/*.tfvars
 infra/.terraform.lock.hcl
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+terraform/.terraform.lock.hcl
 
 # OS
 .DS_Store
