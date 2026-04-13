@@ -21,7 +21,7 @@ export default function ContactPage() {
     // mailto fallback — replace with API endpoint when backend is wired
     const subject = encodeURIComponent(`NorthShift contact from ${name}`);
     const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
-    window.location.href = `mailto:hello@northshiftjobs.ca?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:hello@northshift.ca?subject=${subject}&body=${body}`;
     setSent(true);
     setSending(false);
   };
@@ -41,10 +41,10 @@ export default function ContactPage() {
         <div>
           <p className="text-sm font-medium text-foreground">{t("emailLabel")}</p>
           <a
-            href="mailto:hello@northshiftjobs.ca"
+            href="mailto:hello@northshift.ca"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            hello@northshiftjobs.ca
+            hello@northshift.ca
           </a>
         </div>
       </div>

@@ -117,12 +117,12 @@
     "send": "Envoyer le message",
     "sending": "Ouverture du client de messagerie…",
     "sentTitle": "Votre client de messagerie devrait s'être ouvert.",
-    "sentBody": "Si ce n'est pas le cas, écrivez-nous directement à hello@northshiftjobs.ca"
+    "sentBody": "Si ce n'est pas le cas, écrivez-nous directement à hello@northshift.ca"
   },
   "Privacy": {
     "title": "Politique de confidentialité",
     "effective": "Date d'entrée en vigueur : 12 avril 2026",
-    "intro": "NorthShift Jobs (\"nous\") exploite northshiftjobs.ca. Cette politique explique comment nous collectons, utilisons et protégeons vos informations.",
+    "intro": "NorthShift Jobs (\"nous\") exploite northshift.ca. Cette politique explique comment nous collectons, utilisons et protégeons vos informations.",
     "s1Title": "Informations que nous collectons",
     "s1Body": "Lorsque vous postulez pour un poste, nous collectons votre nom, adresse courriel, numéro de téléphone et les détails de votre permis infirmier que vous fournissez. Lorsque les employeurs s'inscrivent, nous collectons le nom de leur organisation et leur courriel. Nous collectons également des journaux de serveur standard (adresses IP, type de navigateur, pages visitées).",
     "s2Title": "Comment nous utilisons vos informations",
@@ -134,7 +134,7 @@
     "s5Title": "Cookies et analyses",
     "s5Body": "Nous utilisons uniquement des cookies de session essentiels nécessaires au fonctionnement du site. Nous n'utilisons pas de cookies publicitaires ni de pixels de suivi tiers.",
     "s6Title": "Vos droits (LPRPDE)",
-    "s6Body": "En vertu de la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE) du Canada, vous avez le droit d'accéder aux renseignements personnels que nous détenons à votre sujet, de corriger les inexactitudes et de retirer votre consentement à tout moment. Pour faire une demande, contactez-nous à privacy@northshiftjobs.ca.",
+    "s6Body": "En vertu de la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE) du Canada, vous avez le droit d'accéder aux renseignements personnels que nous détenons à votre sujet, de corriger les inexactitudes et de retirer votre consentement à tout moment. Pour faire une demande, contactez-nous à hello@northshift.ca.",
     "contact": "Questions sur la confidentialité ou demandes d'accès :"
   },
   "Pricing": {

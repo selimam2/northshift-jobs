@@ -35,8 +35,8 @@ export default function PrivacyPage() {
 
       <div className="mt-12 rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
         {t("contact")}{" "}
-        <a href="mailto:privacy@northshiftjobs.ca" className="text-foreground hover:underline">
-          privacy@northshiftjobs.ca
+        <a href="mailto:hello@northshift.ca" className="text-foreground hover:underline">
+          hello@northshift.ca
         </a>
       </div>
     </div>
