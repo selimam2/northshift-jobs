@@ -7,6 +7,10 @@
 - [ ] **Unsubscribe page + footer nav link** — `/alerts/unsubscribe?token=...` page linked from alert emails; add visible link in bottom nav bar.
 - [ ] **Stripe subscriptions** — Wire up subscription tiers, webhook handling, org tier upgrades/downgrades, billing portal.
 
+## Possible Future Changes
+
+- [ ] **Restore NAT Gateway** — ECS tasks currently run in public subnets with `assign_public_ip = true` to save ~$35/month. If compliance requirements or enterprise customers demand private subnets, re-add `aws_nat_gateway` + `aws_eip` in `terraform/vpc.tf` and flip ECS services back to `aws_subnet.private[*].id` with `assign_public_ip = false` in `terraform/ecs.tf`.
+
 ## Known Gaps
 
 - [ ] **Language field on job postings** — `ListingLanguage` enum (`English`, `French`, `Bilingual`) is too vague. Needs redesign (e.g. `EnglishOnly`, `FrenchOnly`, `BilingualRequired`, `BilingualAsset`). Requires backend model change, migration, and frontend label updates.
