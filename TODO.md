@@ -1,39 +1,28 @@
-# TODO
+# NorthShift — To-Do
 
-## Language field on job postings
+## Priority Queue
 
-The current `ListingLanguage` enum (`English`, `French`, `Bilingual`) is not a good representation
-of what a healthcare employer actually needs to communicate about language requirements.
+- [ ] **Admin portal** — UI for approving/rejecting listings, viewing applications, managing orgs. Currently requires curl + JWT.
+- [ ] **Encryption for licence numbers** — AES column-level encryption for nurse licence numbers stored in the DB.
+- [ ] **Unsubscribe page + footer nav link** — `/alerts/unsubscribe?token=...` page linked from alert emails; add visible link in bottom nav bar.
+- [ ] **Stripe subscriptions** — Wire up subscription tiers, webhook handling, org tier upgrades/downgrades, billing portal.
 
-**Problem:** "Bilingual" is vague — does it mean the nurse must speak both, or that either is fine?
-"English" / "French" as sole options doesn't capture "preferred" vs "required" distinctions.
+## Known Gaps
 
-**What needs to change:**
+- [ ] **Language field on job postings** — `ListingLanguage` enum (`English`, `French`, `Bilingual`) is too vague. Needs redesign (e.g. `EnglishOnly`, `FrenchOnly`, `BilingualRequired`, `BilingualAsset`). Requires backend model change, migration, and frontend label updates.
+- [ ] **Password reset flow** — not yet built.
+- [ ] **Free trial approach** — needs design decision (time-limited? listing-count-limited?).
+- [ ] **Pricing page** — copy and tier comparison UI.
+- [ ] **Dashboard — listing CRUD** — create, edit, close listings from the UI.
+- [ ] **Dashboard — applications view** — list, status update, notes, assign to recruiter.
+- [ ] **Dashboard — team management** — invite recruiter, set permissions.
 
-### Backend
-- [ ] Redesign `ListingLanguage` enum in `Models/Listing.cs`
-  - Proposed values: `EnglishOnly`, `FrenchOnly`, `BilingualRequired`, `BilingualAsset`
-  - Or consider replacing with two separate boolean fields: `FrenchRequired` + `FrenchAsset`
-- [ ] Update `AppDbContext.cs` — string conversion for the enum
-- [ ] Update `ListingsController.cs` — filter logic (`OR` within language list still applies)
-- [ ] Create a new EF Core migration after model changes
+## Done
 
-### Frontend
-- [ ] Update `lib/types.ts` — `ListingLanguage` type to match new enum values
-- [ ] Update `app/[locale]/jobs/page.tsx` — language filter dropdown options + labels
-- [ ] Update `app/[locale]/jobs/[slug]/page.tsx` — display label on job detail
-- [ ] Update `messages/en.json` + `messages/fr.json` — human-readable labels for new values
-
----
-
-## Other known gaps
-
-- [ ] S3 resume upload — `ApplicationsController` sets `ResumeS3Key = string.Empty` as placeholder
-- [ ] Stripe webhook handler — subscription lifecycle (upgrade, cancel, past_due) not yet handled
-- [ ] Free trial approach — needs design decision (time-limited? listing-count-limited?)
-- [ ] Dashboard — listing CRUD UI (create, edit, close) not yet built
-- [ ] Dashboard — applications view (list, status update, notes, assign) not yet built
-- [ ] Dashboard — team management (invite recruiter, set permissions) not yet built
-- [ ] Terraform / AWS infrastructure — deferred
-- [ ] Pricing page
-- [ ] Password reset flow
+- [x] Resume upload (S3 presigned URLs, required field validation)
+- [x] Branding — northshiftjobs.ca → northshift.ca everywhere, frontend redeployed
+- [x] Contact/privacy email consolidated to hello@northshift.ca
+- [x] Email delivery — Resend domain verified on northshift.ca, application confirmations working
+- [x] DateTime UTC bug fix on application submit (was causing 500)
+- [x] Alert subscription confirmation email wired up
+- [x] Resend DNS records added to Route 53 (DKIM, SPF, MX)
