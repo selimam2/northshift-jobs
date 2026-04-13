@@ -46,13 +46,13 @@ public class ApplicationsController(AppDbContext db, EmailService emailService, 
             ApplicantName = req.ApplicantName,
             ApplicantEmail = req.ApplicantEmail,
             CoverMessage = req.CoverMessage,
-            AvailabilityDate = req.AvailabilityDate,
+            AvailabilityDate = DateTime.SpecifyKind(req.AvailabilityDate, DateTimeKind.Utc),
             ResumeS3Key = req.ResumeS3Key,
             Licences = req.Licences.Select(l => new Licence
             {
                 Province = l.Province,
                 LicenceNumber = l.LicenceNumber,
-                Expiry = l.Expiry
+                Expiry = l.Expiry.HasValue ? DateTime.SpecifyKind(l.Expiry.Value, DateTimeKind.Utc) : null
             }).ToList()
         };
 

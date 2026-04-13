@@ -3,12 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using NorthShift.Api.Data;
 using NorthShift.Api.DTOs.Alerts;
 using NorthShift.Api.Models;
+using NorthShift.Api.Services;
 
 namespace NorthShift.Api.Controllers;
 
 [ApiController]
 [Route("api/alerts")]
-public class AlertsController(AppDbContext db) : ControllerBase
+public class AlertsController(AppDbContext db, EmailService emailService) : ControllerBase
 {
     [HttpPost("subscribe")]
     public async Task<IActionResult> Subscribe(SubscribeRequest req)
@@ -28,6 +29,8 @@ public class AlertsController(AppDbContext db) : ControllerBase
 
         db.AlertSubscriptions.Add(subscription);
         await db.SaveChangesAsync();
+
+        await emailService.SendAlertSubscriptionConfirmationAsync(req.Email, subscription.UnsubscribeToken);
 
         return Ok(new { message = "Subscribed successfully" });
     }

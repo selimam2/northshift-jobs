@@ -5,7 +5,7 @@ namespace NorthShift.Api.Services;
 
 public class EmailService(IConfiguration config, ILogger<EmailService> logger, IResend resend)
 {
-    private readonly string _fromEmail = config["Resend:FromEmail"] ?? "jobs@northshiftjobs.ca";
+    private readonly string _fromEmail = config["Resend:FromEmail"] ?? "hello@northshift.ca";
     private readonly string _fromName = config["Resend:FromName"] ?? "NorthShift Jobs";
 
     public async Task SendListingConfirmationAsync(OrgUser postedBy, Listing listing)
@@ -21,6 +21,22 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
             """;
 
         await SendEmailAsync(postedBy.Email, subject, body);
+    }
+
+    public async Task SendAlertSubscriptionConfirmationAsync(string toEmail, string unsubscribeToken)
+    {
+        var subject = "You're subscribed to NorthShift job alerts";
+        var body = $"""
+            <h2>Job alerts confirmed!</h2>
+            <p>You're now subscribed to NorthShift job alerts. We'll email you when new contract nursing positions match your preferences.</p>
+            <p>Each alert email includes a one-click unsubscribe link.</p>
+            <hr/>
+            <p style="font-size:12px;color:#999;">
+                Don't want these emails? <a href="{config["Frontend:Url"]}/alerts/unsubscribe?token={unsubscribeToken}">Unsubscribe</a>
+            </p>
+            """;
+
+        await SendEmailAsync(toEmail, subject, body);
     }
 
     public async Task SendAlertEmailAsync(string toEmail, Listing listing, string unsubscribeToken)
