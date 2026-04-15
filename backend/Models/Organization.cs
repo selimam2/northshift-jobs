@@ -1,7 +1,7 @@
 namespace NorthShift.Api.Models;
 
 public enum SubscriptionTier { Small, Medium, Large }
-public enum SubscriptionStatus { Active, PastDue, Cancelled, Trialing }
+public enum SubscriptionStatus { None, Trialing, Active, PastDue, Cancelled }
 
 public class Organization
 {
@@ -10,7 +10,7 @@ public class Organization
     public string? StripeCustomerId { get; set; }
     public string? StripeSubscriptionId { get; set; }
     public SubscriptionTier Tier { get; set; } = SubscriptionTier.Small;
-    public SubscriptionStatus SubscriptionStatus { get; set; } = SubscriptionStatus.Active;
+    public SubscriptionStatus SubscriptionStatus { get; set; } = SubscriptionStatus.None;
     public bool IsAnnual { get; set; }
     public DateTime? SubscriptionExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

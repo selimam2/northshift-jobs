@@ -103,11 +103,14 @@ public class ListingsController(AppDbContext db) : ControllerBase
         var orgId = Guid.Parse(User.FindFirstValue("org_id")!);
         var org = await db.Organizations.FindAsync(orgId);
 
+        if (org!.SubscriptionStatus is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing))
+            return StatusCode(402, new { error = "An active subscription is required to post listings." });
+
         var activeCount = await db.Listings
             .CountAsync(l => l.OrgId == orgId && l.Status == ListingStatus.Active);
 
-        if (activeCount >= org!.ListingQuota)
-            return BadRequest(new { error = $"Active listing limit reached for your {org.Tier} plan" });
+        if (activeCount >= org.ListingQuota)
+            return BadRequest(new { error = $"Active listing limit reached for your {org.Tier} plan. Upgrade to post more." });
 
         var validationError = ValidateLanguageContent(req.Language, req.TitleEn, req.TitleFr, req.DescriptionEn, req.DescriptionFr);
         if (validationError is not null) return BadRequest(new { error = validationError });

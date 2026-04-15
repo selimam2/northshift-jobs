@@ -59,12 +59,15 @@ public class AuthController(AppDbContext db, TokenService tokenService, EmailSer
         var orgId = Guid.Parse(User.FindFirstValue("org_id")!);
         var org = await db.Organizations.FindAsync(orgId);
 
+        if (org!.SubscriptionStatus is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing))
+            return StatusCode(402, new { error = "An active subscription is required to invite team members." });
+
         var recruiterCount = await db.Users
             .OfType<Recruiter>()
             .CountAsync(r => r.OrgId == orgId && r.IsActive);
 
-        if (recruiterCount >= org!.RecruiterQuota)
-            return BadRequest(new { error = $"Recruiter limit reached for your {org.Tier} plan" });
+        if (recruiterCount >= org.RecruiterQuota)
+            return BadRequest(new { error = $"Recruiter limit reached for your {org.Tier} plan. Upgrade to add more." });
 
         if (await db.Users.AnyAsync(u => u.Email == req.Email))
             return Conflict(new { error = "Email already registered" });
