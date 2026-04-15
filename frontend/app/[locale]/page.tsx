@@ -55,17 +55,9 @@ function HomePageClient({ locale }: { locale: string }) {
 
       {/* Stats bar */}
       <section className="border-y border-border bg-card">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-border px-4 py-6 sm:px-6">
-          {[
-            { label: t("statsPosted"), value: "240+" },
-            { label: t("statsProvinces"), value: "13" },
-            { label: t("statsNurses"), value: "5,000+" },
-          ].map((stat) => (
-            <div key={stat.label} className="px-6 text-center">
-              <div className="text-2xl font-bold text-primary">{stat.value}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
+        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 text-center">
+          <div className="text-2xl font-bold text-primary">13</div>
+          <div className="mt-1 text-xs text-muted-foreground">{t("statsProvinces")}</div>
         </div>
       </section>
 
