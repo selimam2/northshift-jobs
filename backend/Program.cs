@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NorthShift.Api.Data;
@@ -14,6 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// DataProtection — keys stored in their own table to avoid circular dependency with AppDbContext
+builder.Services.AddDbContext<DataProtectionDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<DataProtectionDbContext>()
+    .SetApplicationName("NorthShift");
+
+builder.Services.AddScoped<EncryptionService>();
 
 // JWT Auth
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
@@ -78,6 +89,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    var dpDb = scope.ServiceProvider.GetRequiredService<DataProtectionDbContext>();
+    dpDb.Database.Migrate();
 
     if (app.Environment.IsProduction())
         await NorthShift.Api.Data.DemoSeeder.SeedAsync(db);

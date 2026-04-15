@@ -11,7 +11,7 @@ namespace NorthShift.Api.Controllers;
 
 [ApiController]
 [Route("api/applications")]
-public class ApplicationsController(AppDbContext db, EmailService emailService, S3Service s3) : ControllerBase
+public class ApplicationsController(AppDbContext db, EmailService emailService, S3Service s3, EncryptionService encryption) : ControllerBase
 {
     // Public — get a presigned S3 upload URL (call before submitting application)
     [HttpGet("presigned-upload")]
@@ -51,7 +51,9 @@ public class ApplicationsController(AppDbContext db, EmailService emailService, 
             Licences = req.Licences.Select(l => new Licence
             {
                 Province = l.Province,
-                LicenceNumber = l.LicenceNumber,
+                LicenceNumber = string.IsNullOrWhiteSpace(l.LicenceNumber)
+                    ? l.LicenceNumber
+                    : encryption.Encrypt(l.LicenceNumber),
                 Expiry = l.Expiry.HasValue ? DateTime.SpecifyKind(l.Expiry.Value, DateTimeKind.Utc) : null
             }).ToList()
         };
@@ -148,6 +150,13 @@ public class ApplicationsController(AppDbContext db, EmailService emailService, 
             var recruiter = await db.Users.OfType<Recruiter>().FirstOrDefaultAsync(r => r.Id == userId);
             if (recruiter is null || !recruiter.Permissions.HasFlag(RecruiterPermissions.ViewAllApplications))
                 return Forbid();
+        }
+
+        // Decrypt licence numbers before returning
+        foreach (var licence in application.Licences)
+        {
+            if (!string.IsNullOrWhiteSpace(licence.LicenceNumber))
+                licence.LicenceNumber = encryption.Decrypt(licence.LicenceNumber);
         }
 
         return Ok(application);
