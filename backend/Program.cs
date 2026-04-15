@@ -46,6 +46,7 @@ builder.Services.AddScoped<S3Service>();
 // Services
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<StripeService>();
 builder.Services.AddOptions<ResendClientOptions>().Configure(options =>
     options.ApiToken = builder.Configuration["Resend:ApiKey"] ?? string.Empty);
 builder.Services.AddHttpClient<IResend, ResendClient>();

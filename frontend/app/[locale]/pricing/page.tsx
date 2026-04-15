@@ -1,11 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api";
 
 const PLANS: {
   key: string;
+  tier: string;
   listings: number | null;
   recruiters: number | null;
   featured: boolean;
@@ -15,6 +20,7 @@ const PLANS: {
 }[] = [
   {
     key: "small",
+    tier: "Small",
     listings: 3,
     recruiters: 1,
     featured: false,
@@ -23,6 +29,7 @@ const PLANS: {
   },
   {
     key: "medium",
+    tier: "Medium",
     listings: 10,
     recruiters: 3,
     featured: false,
@@ -32,6 +39,7 @@ const PLANS: {
   },
   {
     key: "large",
+    tier: "Large",
     listings: null,
     recruiters: null,
     featured: true,
@@ -43,12 +51,51 @@ const PLANS: {
 export default function PricingPage() {
   const t = useTranslations("Pricing");
   const locale = useLocale();
+  const router = useRouter();
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function handleGetStarted(tier: string) {
+    const token = localStorage.getItem("ns_token");
+    if (!token) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    setLoading(tier);
+    try {
+      const { url } = await api.stripe.createCheckout(tier, isAnnual, token);
+      window.location.href = url;
+    } catch {
+      setLoading(null);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-foreground">{t("title")}</h1>
         <p className="mt-4 text-lg text-muted-foreground">{t("subtitle")}</p>
+
+        {/* Billing toggle */}
+        <div className="mt-8 inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1">
+          <button
+            onClick={() => setIsAnnual(false)}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              !isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setIsAnnual(true)}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Annual <span className="ml-1 text-xs text-primary font-semibold">Save 20%</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
@@ -71,11 +118,15 @@ export default function PricingPage() {
             </div>
 
             <div className="mb-6">
-              <span className="text-4xl font-bold text-foreground">${plan.priceMonthly}</span>
+              <span className="text-4xl font-bold text-foreground">
+                ${isAnnual ? plan.priceAnnual : plan.priceMonthly}
+              </span>
               <span className="ml-1 text-sm text-muted-foreground">{t("perMonth")}</span>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("annual", { price: plan.priceAnnual })}
-              </p>
+              {isAnnual && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Billed ${plan.priceAnnual * 12}/year
+                </p>
+              )}
             </div>
 
             <ul className="mb-8 space-y-2.5 flex-1">
@@ -98,14 +149,14 @@ export default function PricingPage() {
               <Feature text={t("bilingualSupport")} />
             </ul>
 
-            <Link href={`/${locale}/login`}>
-              <Button
-                className="w-full"
-                variant={plan.popular ? "default" : "outline"}
-              >
-                {t("getStarted")}
-              </Button>
-            </Link>
+            <Button
+              className="w-full"
+              variant={plan.popular ? "default" : "outline"}
+              disabled={loading === plan.tier}
+              onClick={() => handleGetStarted(plan.tier)}
+            >
+              {loading === plan.tier ? "Redirecting…" : t("getStarted")}
+            </Button>
           </div>
         ))}
       </div>

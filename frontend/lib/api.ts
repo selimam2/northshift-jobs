@@ -99,4 +99,27 @@ export const api = {
       });
     },
   },
+
+  stripe: {
+    getBilling(token: string): Promise<{ tier: string; status: string; isAnnual: boolean; expiresAt: string | null }> {
+      return apiFetch("/api/stripe/billing", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    createCheckout(tier: string, isAnnual: boolean, token: string): Promise<{ url: string }> {
+      return apiFetch("/api/stripe/checkout", {
+        method: "POST",
+        body: JSON.stringify({ tier, isAnnual }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    createPortal(token: string): Promise<{ url: string }> {
+      return apiFetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+  },
 };

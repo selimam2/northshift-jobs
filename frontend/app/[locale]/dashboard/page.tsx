@@ -1,22 +1,43 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, LogOut, LayoutDashboard, FileText, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, LogOut, LayoutDashboard, FileText, Users, CreditCard, AlertTriangle } from "lucide-react";
+import { api } from "@/lib/api";
+
+type BillingInfo = {
+  tier: string;
+  status: string;
+  isAnnual: boolean;
+  expiresAt: string | null;
+};
+
+const TIER_LABELS: Record<string, string> = {
+  Small: "Starter",
+  Medium: "Growth",
+  Large: "Enterprise",
+};
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
   const router = useRouter();
+  const [billing, setBilling] = useState<BillingInfo | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("ns_token");
-    if (!token) router.replace(`/${locale}/login`);
+    if (!token) {
+      router.replace(`/${locale}/login`);
+      return;
+    }
+    api.stripe.getBilling(token).then(setBilling).catch(() => null);
   }, [locale, router]);
 
   const handleLogout = () => {
@@ -24,8 +45,51 @@ export default function DashboardPage() {
     router.push(`/${locale}/login`);
   };
 
+  const handleManageBilling = async () => {
+    const token = localStorage.getItem("ns_token");
+    if (!token) return;
+    setPortalLoading(true);
+    try {
+      const { url } = await api.stripe.createPortal(token);
+      window.location.href = url;
+    } catch {
+      setPortalLoading(false);
+    }
+  };
+
+  const statusBadgeVariant = (status: string) => {
+    if (status === "Active") return "default";
+    if (status === "Trialing") return "secondary";
+    if (status === "PastDue") return "destructive";
+    return "outline";
+  };
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      Active: t("statusActive"),
+      Trialing: t("statusTrialing"),
+      PastDue: t("statusPastDue"),
+      Cancelled: t("statusCancelled"),
+    };
+    return map[status] ?? status;
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      {/* Past due banner */}
+      {billing?.status === "PastDue" && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {t("pastDueBanner")}
+          <button
+            onClick={handleManageBilling}
+            className="ml-auto font-medium underline underline-offset-2"
+          >
+            {t("manageBilling")}
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {t("title")}
@@ -69,6 +133,69 @@ export default function DashboardPage() {
               {item.label}
             </button>
           ))}
+
+          {/* Billing section in sidebar */}
+          {billing && (
+            <>
+              <Separator className="my-3" />
+              <div className="px-3 py-2">
+                <div className="mb-2 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {t("billing")}
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-foreground font-medium">
+                      {TIER_LABELS[billing.tier] ?? billing.tier}
+                    </span>
+                    <Badge variant={statusBadgeVariant(billing.status) as "default" | "secondary" | "destructive" | "outline"} className="text-xs">
+                      {statusLabel(billing.status)}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {billing.isAnnual ? t("annual") : t("monthly")}
+                  </p>
+                  {billing.expiresAt && billing.status === "Trialing" && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("trialEndsOn", {
+                        date: new Date(billing.expiresAt).toLocaleDateString(),
+                      })}
+                    </p>
+                  )}
+                  {billing.expiresAt && billing.status === "Active" && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("renewsOn", {
+                        date: new Date(billing.expiresAt).toLocaleDateString(),
+                      })}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleManageBilling}
+                  disabled={portalLoading}
+                  className="mt-3 w-full rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors text-center"
+                >
+                  {portalLoading ? "Opening…" : t("manageBilling")}
+                </button>
+              </div>
+            </>
+          )}
+
+          {!billing && (
+            <>
+              <Separator className="my-3" />
+              <div className="px-3 py-2">
+                <p className="text-xs text-muted-foreground mb-2">No active plan</p>
+                <Link href={`/${locale}/pricing`}>
+                  <Button size="sm" variant="outline" className="w-full text-xs">
+                    {t("upgradePlan")}
+                  </Button>
+                </Link>
+              </div>
+            </>
+          )}
         </nav>
 
         {/* Main content */}
