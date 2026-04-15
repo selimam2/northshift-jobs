@@ -98,6 +98,20 @@ export const api = {
         body: JSON.stringify({ email, password }),
       });
     },
+
+    forgotPassword(email: string): Promise<{ message: string }> {
+      return apiFetch("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
+
+    resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+      return apiFetch("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, newPassword }),
+      });
+    },
   },
 
   stripe: {

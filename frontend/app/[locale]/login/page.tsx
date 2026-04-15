@@ -73,12 +73,12 @@ export default function LoginPage() {
                   <label className="text-sm font-medium text-foreground">
                     {t("password")}
                   </label>
-                  <button
-                    type="button"
+                  <Link
+                    href={`/${locale}/forgot-password`}
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     {t("forgotPassword")}
-                  </button>
+                  </Link>
                 </div>
                 <Input
                   required

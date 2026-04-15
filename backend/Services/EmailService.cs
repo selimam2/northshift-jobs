@@ -91,6 +91,21 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
         await SendEmailAsync(accountManager.Email, subject, body);
     }
 
+    public async Task SendPasswordResetEmailAsync(string toEmail, string resetToken)
+    {
+        var subject = "Reset your NorthShift password";
+        var resetUrl = $"{config["Frontend:Url"]}/en/reset-password?token={resetToken}";
+        var body = $"""
+            <h2>Reset your password</h2>
+            <p>We received a request to reset the password for your NorthShift account.</p>
+            <p><a href="{resetUrl}" style="display:inline-block;padding:10px 20px;background:#0070f3;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a></p>
+            <p>This link expires in 1 hour. If you didn't request a reset, you can ignore this email — your password won't change.</p>
+            <p>NorthShift Jobs</p>
+            """;
+
+        await SendEmailAsync(toEmail, subject, body);
+    }
+
     public async Task SendInviteEmailAsync(Recruiter recruiter, Organization org)
     {
         var subject = $"You've been invited to join {org.Name} on NorthShift Jobs";
