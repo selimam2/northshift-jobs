@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,11 @@ export default function Nav() {
   const t = useTranslations("Nav");
   const locale = useLocale();
   const otherLocale = locale === "en" ? "fr" : "en";
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(!!localStorage.getItem("ns_token"));
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
@@ -37,23 +43,31 @@ export default function Nav() {
           >
             {t("alerts")}
           </Link>
-          <Link
-            href={`/${locale}/login`}
-            className="rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:px-3"
-          >
-            <span className="sm:hidden">Login</span>
-            <span className="hidden sm:inline">{t("login")}</span>
-          </Link>
+          {!loggedIn && (
+            <Link
+              href={`/${locale}/login`}
+              className="rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:px-3"
+            >
+              <span className="sm:hidden">Login</span>
+              <span className="hidden sm:inline">{t("login")}</span>
+            </Link>
+          )}
           <Link
             href={`/${otherLocale}`}
             className="rounded-md border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             {otherLocale.toUpperCase()}
           </Link>
-          <Link href={`/${locale}/login`} className="ml-1">
+          <Link href={loggedIn ? `/${locale}/dashboard` : `/${locale}/login`} className="ml-1">
             <Button size="sm">
-              <span className="sm:hidden">Post</span>
-              <span className="hidden sm:inline">{t("postJob")}</span>
+              {loggedIn ? (
+                t("dashboard")
+              ) : (
+                <>
+                  <span className="sm:hidden">Post</span>
+                  <span className="hidden sm:inline">{t("postJob")}</span>
+                </>
+              )}
             </Button>
           </Link>
         </nav>
