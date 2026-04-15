@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, LayoutDashboard, FileText, Users, CreditCard, AlertTriangle } from "lucide-react";
+import { Plus, LogOut, LayoutDashboard, FileText, Users, CreditCard, AlertTriangle, Lock } from "lucide-react";
 import { api } from "@/lib/api";
 
 type BillingInfo = {
@@ -95,12 +95,21 @@ export default function DashboardPage() {
           {t("title")}
         </h1>
         <div className="flex items-center gap-3">
-          <Link href={`/${locale}/dashboard/listings/new`}>
-            <Button size="sm" className="gap-1.5">
-              <Plus className="h-4 w-4" />
-              {t("newListing")}
-            </Button>
-          </Link>
+          {billing?.status === "Active" || billing?.status === "Trialing" ? (
+            <Link href={`/${locale}/dashboard/listings/new`}>
+              <Button size="sm" className="gap-1.5">
+                <Plus className="h-4 w-4" />
+                {t("newListing")}
+              </Button>
+            </Link>
+          ) : (
+            <Link href={`/${locale}/pricing`}>
+              <Button size="sm" className="gap-1.5">
+                <Lock className="h-4 w-4" />
+                Subscribe to Post
+              </Button>
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
@@ -200,20 +209,53 @@ export default function DashboardPage() {
 
         {/* Main content */}
         <div className="lg:col-span-3">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="py-12 text-center">
-                <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-muted-foreground">{t("noListings")}</p>
-                <Link href={`/${locale}/dashboard/listings/new`}>
-                  <Button size="sm" className="mt-4 gap-1.5">
-                    <Plus className="h-4 w-4" />
-                    {t("newListing")}
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          {billing && billing.status !== "Active" && billing.status !== "Trialing" ? (
+            <Card className="border-primary/20">
+              <CardContent className="pt-6">
+                <div className="py-12 text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Lock className="h-7 w-7 text-primary" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {billing.status === "None" || billing.status === "Cancelled"
+                      ? "Subscribe to start posting"
+                      : "Subscription past due"}
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+                    {billing.status === "PastDue"
+                      ? "Your last payment failed. Update your billing info to restore access to posting."
+                      : "Choose a plan to post contract nursing roles. 14-day free trial — card required, cancel anytime."}
+                  </p>
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                    {billing.status === "PastDue" ? (
+                      <Button size="lg" onClick={handleManageBilling} disabled={portalLoading}>
+                        {portalLoading ? "Opening…" : "Update Payment Info"}
+                      </Button>
+                    ) : (
+                      <Link href={`/${locale}/pricing`}>
+                        <Button size="lg">Choose a Plan</Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="py-12 text-center">
+                  <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+                  <p className="text-muted-foreground">{t("noListings")}</p>
+                  <Link href={`/${locale}/dashboard/listings/new`}>
+                    <Button size="sm" className="mt-4 gap-1.5">
+                      <Plus className="h-4 w-4" />
+                      {t("newListing")}
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

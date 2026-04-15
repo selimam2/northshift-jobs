@@ -8,7 +8,6 @@ import { api } from "@/lib/api";
 import type { ListingLanguage, RoleType, Province } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock } from "lucide-react";
 
 const PROVINCES: { value: Province; label: string }[] = [
   { value: "AB", label: "Alberta" },
@@ -37,15 +36,25 @@ const PROVINCES: { value: Province; label: string }[] = [
 const ROLES: RoleType[] = ["RN", "RPN", "LPN", "NP", "CNA", "Other"];
 const CONTRACT_LENGTHS = ["4 weeks", "8 weeks", "13 weeks", "26 weeks", "52 weeks+"];
 
+type BillingStatus = "loading" | "unsubscribed" | "ok";
+
 export default function NewListingPage() {
   const router = useRouter();
   const locale = useLocale();
 
   const [token, setToken] = useState("");
+  const [billingStatus, setBillingStatus] = useState<BillingStatus>("loading");
+
   useEffect(() => {
     const t = localStorage.getItem("ns_token") ?? "";
-    if (!t) router.replace(`/${locale}/login`);
+    if (!t) { router.replace(`/${locale}/login`); return; }
     setToken(t);
+    api.stripe.getBilling(t)
+      .then((b) => {
+        const active = b.status === "Active" || b.status === "Trialing";
+        setBillingStatus(active ? "ok" : "unsubscribed");
+      })
+      .catch(() => setBillingStatus("unsubscribed"));
   }, [locale, router]);
 
   // Language selection drives which content fields appear
@@ -53,14 +62,12 @@ export default function NewListingPage() {
   const showEn = language === "English" || language === "Bilingual";
   const showFr = language === "French" || language === "Bilingual";
 
-  // Content fields
   const [titleEn, setTitleEn] = useState("");
   const [titleFr, setTitleFr] = useState("");
   const [descEn, setDescEn] = useState("");
   const [descFr, setDescFr] = useState("");
   const [contentTab, setContentTab] = useState<"en" | "fr">("en");
 
-  // Posting details
   const [roleTypes, setRoleTypes] = useState<RoleType[]>([]);
   const [province, setProvince] = useState<Province | "">("");
   const [community, setCommunity] = useState("");
@@ -79,7 +86,6 @@ export default function NewListingPage() {
       prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r],
     );
 
-  // When language changes, reset to the first available tab
   useEffect(() => {
     if (language === "French") setContentTab("fr");
     else setContentTab("en");
@@ -121,6 +127,40 @@ export default function NewListingPage() {
     }
   };
 
+  // ── Subscription gate ──────────────────────────────────────────────────────
+  if (billingStatus === "loading") {
+    return (
+      <div className="flex min-h-[calc(100vh-140px)] items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (billingStatus === "unsubscribed") {
+    return (
+      <div className="flex min-h-[calc(100vh-140px)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <Lock className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Subscription required</h1>
+          <p className="mt-3 text-muted-foreground">
+            You need an active plan to post listings. Start your 14-day free trial — card required, cancel anytime.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link href={`/${locale}/pricing`}>
+              <Button size="lg" className="w-full sm:w-auto">Choose a Plan</Button>
+            </Link>
+            <Link href={`/${locale}/dashboard`}>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Back to Dashboard</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Form (subscribed) ──────────────────────────────────────────────────────
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <Link
@@ -165,13 +205,12 @@ export default function NewListingPage() {
           </div>
         </section>
 
-        {/* ── Content (title + description) ──────────────────────── */}
+        {/* ── Content ────────────────────────────────────────────── */}
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Content
           </h2>
 
-          {/* Tab bar — only shown for bilingual */}
           {language === "Bilingual" && (
             <div className="mb-4 flex gap-1 rounded-lg border border-border bg-muted/30 p-1 w-fit">
               {(["en", "fr"] as const).map((tab) => {
@@ -200,23 +239,14 @@ export default function NewListingPage() {
           )}
 
           <div className="space-y-4">
-            {/* EN fields */}
             {showEn && (language !== "Bilingual" || contentTab === "en") && (
               <>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">
-                    Title (English) *
-                  </label>
-                  <Input
-                    value={titleEn}
-                    onChange={(e) => setTitleEn(e.target.value)}
-                    placeholder="e.g. Registered Nurse — Emergency Care"
-                  />
+                  <label className="mb-1 block text-sm font-medium text-foreground">Title (English) *</label>
+                  <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="e.g. Registered Nurse — Emergency Care" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">
-                    Description (English) *
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Description (English) *</label>
                   <textarea
                     value={descEn}
                     onChange={(e) => setDescEn(e.target.value)}
@@ -227,24 +257,14 @@ export default function NewListingPage() {
                 </div>
               </>
             )}
-
-            {/* FR fields */}
             {showFr && (language !== "Bilingual" || contentTab === "fr") && (
               <>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">
-                    Titre (Français) *
-                  </label>
-                  <Input
-                    value={titleFr}
-                    onChange={(e) => setTitleFr(e.target.value)}
-                    placeholder="ex. Infirmière autorisée — Soins d'urgence"
-                  />
+                  <label className="mb-1 block text-sm font-medium text-foreground">Titre (Français) *</label>
+                  <Input value={titleFr} onChange={(e) => setTitleFr(e.target.value)} placeholder="ex. Infirmière autorisée — Soins d'urgence" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">
-                    Description (Français) *
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Description (Français) *</label>
                   <textarea
                     value={descFr}
                     onChange={(e) => setDescFr(e.target.value)}
@@ -260,9 +280,7 @@ export default function NewListingPage() {
 
         {/* ── Role types ─────────────────────────────────────────── */}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Role Types *
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Role Types *</h2>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
               <button
@@ -275,9 +293,7 @@ export default function NewListingPage() {
                     : "border-border text-muted-foreground hover:border-primary/50"
                 }`}
               >
-                {roleTypes.includes(r) && (
-                  <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />
-                )}
+                {roleTypes.includes(r) && <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />}
                 {r}
               </button>
             ))}
@@ -286,100 +302,57 @@ export default function NewListingPage() {
 
         {/* ── Location ───────────────────────────────────────────── */}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Location *
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Location *</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Province / Territory</label>
               <Select value={province} onValueChange={(v) => setProvince((v ?? "") as Province)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select province" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select province" /></SelectTrigger>
                 <SelectContent>
-                  {PROVINCES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
+                  {PROVINCES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Community</label>
-              <Input
-                value={community}
-                onChange={(e) => setCommunity(e.target.value)}
-                placeholder="e.g. Fort Nelson"
-              />
+              <Input value={community} onChange={(e) => setCommunity(e.target.value)} placeholder="e.g. Fort Nelson" />
             </div>
           </div>
         </section>
 
         {/* ── Contract details ───────────────────────────────────── */}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Contract Details
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contract Details</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Contract Length *</label>
               <Select value={contractLength} onValueChange={(v) => setContractLength(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select length" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select length" /></SelectTrigger>
                 <SelectContent>
-                  {CONTRACT_LENGTHS.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
+                  {CONTRACT_LENGTHS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Start Date</label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Pay Min ($/hr)</label>
-              <Input
-                type="number"
-                min={0}
-                value={payMin}
-                onChange={(e) => setPayMin(e.target.value)}
-                placeholder="45"
-              />
+              <Input type="number" min={0} value={payMin} onChange={(e) => setPayMin(e.target.value)} placeholder="45" />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Pay Max ($/hr)</label>
-              <Input
-                type="number"
-                min={0}
-                value={payMax}
-                onChange={(e) => setPayMax(e.target.value)}
-                placeholder="60"
-              />
+              <Input type="number" min={0} value={payMax} onChange={(e) => setPayMax(e.target.value)} placeholder="60" />
             </div>
           </div>
-
           <div className="mt-4 flex gap-6">
             <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
-              <input
-                type="checkbox"
-                className="accent-primary"
-                checked={housing}
-                onChange={(e) => setHousing(e.target.checked)}
-              />
+              <input type="checkbox" className="accent-primary" checked={housing} onChange={(e) => setHousing(e.target.checked)} />
               Housing provided
             </label>
             <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
-              <input
-                type="checkbox"
-                className="accent-primary"
-                checked={travel}
-                onChange={(e) => setTravel(e.target.checked)}
-              />
+              <input type="checkbox" className="accent-primary" checked={travel} onChange={(e) => setTravel(e.target.checked)} />
               Travel covered
             </label>
           </div>
