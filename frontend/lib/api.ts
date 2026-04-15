@@ -127,6 +127,37 @@ export const api = {
     },
   },
 
+  admin: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getPendingListings(token: string): Promise<any[]> {
+      return apiFetch("/api/admin/listings/pending", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getOrgs(token: string): Promise<any[]> {
+      return apiFetch("/api/admin/orgs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    approveListing(id: string, token: string): Promise<{ message: string }> {
+      return apiFetch(`/api/admin/listings/${id}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    rejectListing(id: string, token: string): Promise<{ message: string }> {
+      return apiFetch(`/api/admin/listings/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify("No reason provided"),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+  },
+
   stripe: {
     getBilling(token: string): Promise<{ tier: string; status: string; isAnnual: boolean; expiresAt: string | null }> {
       return apiFetch("/api/stripe/billing", {
