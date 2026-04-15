@@ -66,6 +66,11 @@ data "aws_ssm_parameter" "resend_api_key" {
   with_decryption = false
 }
 
+data "aws_ssm_parameter" "stripe_webhook_secret" {
+  name            = "/northshift/stripe_webhook_secret"
+  with_decryption = false
+}
+
 # ── API task definition ───────────────────────────────────────────────────────
 
 resource "aws_ecs_task_definition" "api" {
@@ -98,6 +103,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "ConnectionStrings__DefaultConnection", valueFrom = aws_ssm_parameter.db_connection_string.arn },
       { name = "Jwt__Key",                             valueFrom = data.aws_ssm_parameter.jwt_key.arn },
       { name = "Stripe__SecretKey",                    valueFrom = data.aws_ssm_parameter.stripe_secret_key.arn },
+      { name = "Stripe__WebhookSecret",                valueFrom = data.aws_ssm_parameter.stripe_webhook_secret.arn },
       { name = "Resend__ApiKey",                       valueFrom = data.aws_ssm_parameter.resend_api_key.arn },
     ]
 
