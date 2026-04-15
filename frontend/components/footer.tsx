@@ -44,6 +44,14 @@ export default function Footer() {
                   {t("alerts")}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href={`/${locale}/alerts/unsubscribe-email`}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {t("unsubscribe")}
+                </Link>
+              </li>
             </ul>
           </div>
 

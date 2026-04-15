@@ -91,6 +91,21 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
         await SendEmailAsync(accountManager.Email, subject, body);
     }
 
+    public async Task SendUnsubscribeLinkEmailAsync(string toEmail, string unsubscribeToken)
+    {
+        var subject = "Unsubscribe from NorthShift job alerts";
+        var unsubscribeUrl = $"{config["Frontend:Url"]}/en/alerts/unsubscribe?token={unsubscribeToken}";
+        var body = $"""
+            <h2>Unsubscribe from job alerts</h2>
+            <p>We received a request to unsubscribe this email address from NorthShift job alerts.</p>
+            <p><a href="{unsubscribeUrl}" style="display:inline-block;padding:10px 20px;background:#0070f3;color:#fff;text-decoration:none;border-radius:6px;">Unsubscribe</a></p>
+            <p>If you didn't request this, you can ignore this email — you'll continue receiving alerts as normal.</p>
+            <p>NorthShift Jobs</p>
+            """;
+
+        await SendEmailAsync(toEmail, subject, body);
+    }
+
     public async Task SendPasswordResetEmailAsync(string toEmail, string resetToken)
     {
         var subject = "Reset your NorthShift password";

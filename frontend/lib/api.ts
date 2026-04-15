@@ -89,6 +89,19 @@ export const api = {
         body: JSON.stringify(data),
       });
     },
+
+    unsubscribe(token: string): Promise<{ message: string }> {
+      return apiFetch(`/api/alerts/unsubscribe?token=${encodeURIComponent(token)}`, {
+        method: "DELETE",
+      });
+    },
+
+    sendUnsubscribeLink(email: string): Promise<{ message: string }> {
+      return apiFetch("/api/alerts/send-unsubscribe-link", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
   },
 
   auth: {

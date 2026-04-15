@@ -35,6 +35,19 @@ public class AlertsController(AppDbContext db, EmailService emailService) : Cont
         return Ok(new { message = "Subscribed successfully" });
     }
 
+    [HttpPost("send-unsubscribe-link")]
+    public async Task<IActionResult> SendUnsubscribeLink([FromBody] SendUnsubscribeLinkRequest req)
+    {
+        var subscription = await db.AlertSubscriptions
+            .FirstOrDefaultAsync(a => a.Email == req.Email);
+
+        if (subscription is not null)
+            await emailService.SendUnsubscribeLinkEmailAsync(subscription.Email, subscription.UnsubscribeToken);
+
+        // Always 200 — don't reveal whether the email is subscribed
+        return Ok(new { message = "If that email is subscribed, you'll receive an unsubscribe link shortly." });
+    }
+
     [HttpDelete("unsubscribe")]
     public async Task<IActionResult> Unsubscribe([FromQuery] string token)
     {
