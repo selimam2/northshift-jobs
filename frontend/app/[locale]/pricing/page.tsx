@@ -59,7 +59,7 @@ export default function PricingPage() {
   async function handleGetStarted(tier: string) {
     const token = localStorage.getItem("ns_token");
     if (!token) {
-      router.push(`/${locale}/register?tier=${tier}&annual=${isAnnual}`);
+      router.push(`/${locale}/register`);
       return;
     }
 

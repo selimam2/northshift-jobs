@@ -14,8 +14,8 @@ async function apiFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
+    headers: { "Content-Type": "application/json", ...options?.headers },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -10,19 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, AlertCircle } from "lucide-react";
 
-const TIER_LABELS: Record<string, string> = {
-  Small: "Starter — $99/mo",
-  Medium: "Growth — $249/mo",
-  Large: "Enterprise — $599/mo",
-};
-
 function RegisterForm() {
   const locale = useLocale();
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const tier = searchParams.get("tier") ?? "";
-  const annual = searchParams.get("annual") === "true";
 
   const [orgName, setOrgName] = useState("");
   const [name, setName] = useState("");
@@ -32,18 +22,11 @@ function RegisterForm() {
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // If already logged in, go straight to checkout or dashboard
+  // If already logged in, go to dashboard
   useEffect(() => {
     const token = localStorage.getItem("ns_token");
-    if (!token) return;
-    if (tier) {
-      api.stripe.createCheckout(tier, annual, token)
-        .then(({ url }) => { window.location.href = url; })
-        .catch(() => router.replace(`/${locale}/dashboard`));
-    } else {
-      router.replace(`/${locale}/dashboard`);
-    }
-  }, [tier, annual, locale, router]);
+    if (token) router.replace(`/${locale}/dashboard`);
+  }, [locale, router]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -63,33 +46,20 @@ function RegisterForm() {
     try {
       const { token } = await api.auth.register({ orgName, name, email, password });
       localStorage.setItem("ns_token", token);
-
-      if (tier) {
-        const { url } = await api.stripe.createCheckout(tier, annual, token);
-        window.location.href = url;
-      } else {
-        router.push(`/${locale}/dashboard`);
-      }
+      router.push(`/${locale}/dashboard`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.includes("409") || msg.toLowerCase().includes("already exists") || msg.toLowerCase().includes("conflict")) {
-        setError("An account with this email already exists.");
-      } else {
-        setError(msg);
+      if (msg.toLowerCase().includes("already registered") || msg.includes("409") || msg.toLowerCase().includes("conflict")) {
+        router.push(`/${locale}/login?email=${encodeURIComponent(email)}&notice=exists`);
+        return;
       }
+      setError(msg);
       setSubmitting(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {tier && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
-          Selected plan: <span className="font-semibold">{TIER_LABELS[tier] ?? tier}</span>
-          {annual && <span className="ml-1 text-xs text-primary">(annual)</span>}
-        </div>
-      )}
-
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Organisation Name *</label>
         <Input
@@ -141,19 +111,12 @@ function RegisterForm() {
       {error && (
         <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>
-            {error}{" "}
-            {error.includes("already exists") && (
-              <Link href={`/${locale}/login`} className="underline font-medium">Log in instead?</Link>
-            )}
-          </span>
+          {error}
         </div>
       )}
 
       <Button type="submit" disabled={submitting} size="lg" className="mt-1">
-        {submitting
-          ? (tier ? "Creating account…" : "Creating account…")
-          : (tier ? "Create Account & Continue to Checkout" : "Create Account")}
+        {submitting ? "Creating account…" : "Create Account"}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
