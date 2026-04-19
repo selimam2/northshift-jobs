@@ -11,8 +11,7 @@ public class SubmitApplicationRequest
     [Required, EmailAddress]
     public string ApplicantEmail { get; set; } = string.Empty;
 
-    [Required]
-    public string CoverMessage { get; set; } = string.Empty;
+    public string? CoverMessage { get; set; }
 
     [Required]
     public DateTime AvailabilityDate { get; set; }

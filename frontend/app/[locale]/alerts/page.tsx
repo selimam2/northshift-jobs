@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Bell } from "lucide-react";
+import { CheckCircle2, Bell, AlertCircle } from "lucide-react";
 
 const PROVINCES: { value: Province; label: string }[] = [
   { value: "AB", label: "Alberta" },
@@ -82,9 +82,15 @@ export default function AlertsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError("");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Enter a valid email address.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -99,7 +105,12 @@ export default function AlertsPage() {
       });
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      if (msg.includes("409") || msg.toLowerCase().includes("already subscribed") || msg.toLowerCase().includes("conflict")) {
+        setError("This email is already subscribed. Check your inbox for a confirmation.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -131,12 +142,13 @@ export default function AlertsPage() {
                   {t("email")} *
                 </label>
                 <Input
-                  required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nurse@example.com"
+                  className={emailError ? "border-destructive" : ""}
                 />
+                {emailError && <p className="mt-1 text-xs text-destructive">{emailError}</p>}
               </div>
 
               <div>
@@ -190,7 +202,12 @@ export default function AlertsPage() {
                 />
               </div>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
 
               <Button type="submit" disabled={submitting} size="lg">
                 {submitting ? "…" : t("subscribe")}

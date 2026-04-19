@@ -30,6 +30,7 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // If already logged in, go straight to checkout or dashboard
   useEffect(() => {
@@ -44,9 +45,19 @@ function RegisterForm() {
     }
   }, [tier, annual, locale, router]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!orgName.trim() || orgName.trim().length < 2) e.orgName = "Organisation name is required.";
+    if (!name.trim() || name.trim().length < 2) e.name = "Your name is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email address.";
+    if (password.length < 8) e.password = "Password must be at least 8 characters.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (!validate()) return;
     setSubmitting(true);
     setError("");
     try {
@@ -60,7 +71,12 @@ function RegisterForm() {
         router.push(`/${locale}/dashboard`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      if (msg.includes("409") || msg.toLowerCase().includes("already exists") || msg.toLowerCase().includes("conflict")) {
+        setError("An account with this email already exists.");
+      } else {
+        setError(msg);
+      }
       setSubmitting(false);
     }
   };
@@ -77,48 +93,60 @@ function RegisterForm() {
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Organisation Name *</label>
         <Input
-          required
           value={orgName}
           onChange={(e) => setOrgName(e.target.value)}
           placeholder="Northern Health Authority"
+          className={errors.orgName ? "border-destructive" : ""}
         />
+        {errors.orgName && <p className="mt-1 text-xs text-destructive">{errors.orgName}</p>}
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Your Name *</label>
         <Input
-          required
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Jane Smith"
+          className={errors.name ? "border-destructive" : ""}
         />
+        {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Work Email *</label>
         <Input
-          required
           type="email"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="jane@yourorg.ca"
+          className={errors.email ? "border-destructive" : ""}
         />
+        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Password *</label>
         <Input
-          required
           type="password"
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 8 characters"
+          className={errors.password ? "border-destructive" : ""}
         />
+        {errors.password
+          ? <p className="mt-1 text-xs text-destructive">{errors.password}</p>
+          : <p className="mt-1 text-xs text-muted-foreground">Minimum 8 characters</p>
+        }
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
+        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            {error}{" "}
+            {error.includes("already exists") && (
+              <Link href={`/${locale}/login`} className="underline font-medium">Log in instead?</Link>
+            )}
+          </span>
         </div>
       )}
 

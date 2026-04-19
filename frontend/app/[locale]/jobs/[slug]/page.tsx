@@ -57,16 +57,17 @@ export default function JobDetailPage({
   // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [availabilityDate, setAvailabilityDate] = useState("");
   const [licenceProvince, setLicenceProvince] = useState<Province | "">("");
   const [licenceNumber, setLicenceNumber] = useState("");
   const [licenceExpiry, setLicenceExpiry] = useState("");
-  const [coverLetter, setCoverLetter] = useState("");
+  const [coverMessage, setCoverMessage] = useState("");
   const [consent, setConsent] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     api.listings
@@ -76,42 +77,50 @@ export default function JobDetailPage({
       .finally(() => setLoading(false));
   }, [slug]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!name.trim() || name.trim().length < 2) e.name = "Full name is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email address.";
+    if (!availabilityDate) e.availabilityDate = "Availability date is required.";
+    else if (new Date(availabilityDate) < new Date(new Date().toDateString())) e.availabilityDate = "Date must be today or in the future.";
+    if (!licenceProvince) e.licenceProvince = "Province of licence is required.";
+    if (!resumeFile) e.resume = t("resumeRequired");
+    else {
+      const ext = resumeFile.name.split(".").pop()?.toLowerCase();
+      if (!["pdf", "doc", "docx"].includes(ext ?? "")) e.resume = "Only PDF, DOC, or DOCX files are accepted.";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!listing) return;
+    if (!validate()) return;
     setSubmitting(true);
-    setError("");
+    setSubmitError("");
     try {
-      // 1. Upload resume to S3
-      if (!resumeFile) {
-        setError(t("resumeRequired"));
-        return;
-      }
-      const { uploadUrl, s3Key } = await api.applications.getUploadUrl(resumeFile.name);
-      await api.applications.uploadResume(uploadUrl, resumeFile);
-      const resumeS3Key = s3Key;
+      const { uploadUrl, s3Key } = await api.applications.getUploadUrl(resumeFile!.name);
+      await api.applications.uploadResume(uploadUrl, resumeFile!);
 
-      // 2. Submit application
       await api.applications.submit(listing.id, {
         applicantName: name,
         applicantEmail: email,
-        applicantPhone: phone,
-        licences: licenceProvince
-          ? [
-              {
-                province: licenceProvince,
-                licenceNumber: licenceNumber || undefined,
-                expiry: licenceExpiry || undefined,
-              },
-            ]
-          : [],
-        coverLetter: coverLetter || undefined,
-        emailConsent: consent,
-        resumeS3Key,
+        availabilityDate: new Date(availabilityDate).toISOString(),
+        licences: [
+          {
+            province: licenceProvince as Province,
+            licenceNumber: licenceNumber || undefined,
+            expiry: licenceExpiry || undefined,
+          },
+        ],
+        coverMessage: coverMessage || undefined,
+        consentToAlerts: consent,
+        resumeS3Key: s3Key,
       });
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -238,11 +247,12 @@ export default function JobDetailPage({
                         {t("fullName")} *
                       </label>
                       <Input
-                        required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Jane Doe"
+                        className={errors.name ? "border-destructive" : ""}
                       />
+                      {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
                     </div>
 
                     <div>
@@ -250,25 +260,26 @@ export default function JobDetailPage({
                         {t("email")} *
                       </label>
                       <Input
-                        required
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="jane@example.com"
+                        className={errors.email ? "border-destructive" : ""}
                       />
+                      {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email}</p>}
                     </div>
 
                     <div>
                       <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                        {t("phone")} *
+                        Availability Date *
                       </label>
                       <Input
-                        required
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000"
+                        type="date"
+                        value={availabilityDate}
+                        onChange={(e) => setAvailabilityDate(e.target.value)}
+                        className={errors.availabilityDate ? "border-destructive" : ""}
                       />
+                      {errors.availabilityDate && <p className="mt-1 text-xs text-destructive">{errors.availabilityDate}</p>}
                     </div>
 
                     <div>
@@ -278,9 +289,8 @@ export default function JobDetailPage({
                       <Select
                         value={licenceProvince}
                         onValueChange={(v) => setLicenceProvince((v ?? "") as Province)}
-                        required
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={errors.licenceProvince ? "border-destructive" : ""}>
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
                         <SelectContent>
@@ -291,6 +301,7 @@ export default function JobDetailPage({
                           ))}
                         </SelectContent>
                       </Select>
+                      {errors.licenceProvince && <p className="mt-1 text-xs text-destructive">{errors.licenceProvince}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -321,8 +332,8 @@ export default function JobDetailPage({
                         {t("coverLetter")}
                       </label>
                       <textarea
-                        value={coverLetter}
-                        onChange={(e) => setCoverLetter(e.target.value)}
+                        value={coverMessage}
+                        onChange={(e) => setCoverMessage(e.target.value)}
                         rows={3}
                         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                         placeholder="Brief intro…"
@@ -331,9 +342,9 @@ export default function JobDetailPage({
 
                     <div>
                       <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                        {t("resume")}
+                        {t("resume")} *
                       </label>
-                      <label className="flex cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors">
+                      <label className={`flex cursor-pointer items-center gap-2 rounded-md border bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors ${errors.resume ? "border-destructive" : "border-input"}`}>
                         <Paperclip className="h-4 w-4 shrink-0" />
                         <span className="truncate">
                           {resumeFile ? resumeFile.name : t("resume")}
@@ -345,7 +356,10 @@ export default function JobDetailPage({
                           onChange={(e) => setResumeFile(e.target.files?.[0] ?? null)}
                         />
                       </label>
-                      <p className="mt-1 text-xs text-muted-foreground">{t("resumeNote")}</p>
+                      {errors.resume
+                        ? <p className="mt-1 text-xs text-destructive">{errors.resume}</p>
+                        : <p className="mt-1 text-xs text-muted-foreground">{t("resumeNote")}</p>
+                      }
                     </div>
 
                     <label className="flex items-start gap-2 cursor-pointer">
@@ -360,8 +374,10 @@ export default function JobDetailPage({
                       </span>
                     </label>
 
-                    {error && (
-                      <p className="text-xs text-destructive">{error}</p>
+                    {submitError && (
+                      <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        {submitError}
+                      </div>
                     )}
 
                     <Button type="submit" disabled={submitting} className="mt-1 w-full">

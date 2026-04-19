@@ -83,7 +83,7 @@ export const api = {
   },
 
   alerts: {
-    subscribe(data: SubscribeRequest): Promise<{ token: string }> {
+    subscribe(data: SubscribeRequest): Promise<{ message: string }> {
       return apiFetch("/api/alerts/subscribe", {
         method: "POST",
         body: JSON.stringify(data),

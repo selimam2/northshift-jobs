@@ -80,6 +80,7 @@ export default function NewListingPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const toggleRole = (r: RoleType) =>
     setRoleTypes((prev) =>
@@ -91,12 +92,25 @@ export default function NewListingPage() {
     else setContentTab("en");
   }, [language]);
 
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (showEn && !titleEn.trim()) e.titleEn = "English title is required.";
+    if (showFr && !titleFr.trim()) e.titleFr = "French title is required.";
+    if (showEn && !descEn.trim()) e.descEn = "English description is required.";
+    if (showFr && !descFr.trim()) e.descFr = "French description is required.";
+    if (roleTypes.length === 0) e.roleTypes = "Select at least one role type.";
+    if (!province) e.province = "Province is required.";
+    if (!community.trim()) e.community = "Community is required.";
+    if (!contractLength) e.contractLength = "Contract length is required.";
+    if (payMin && parseFloat(payMin) <= 0) e.payMin = "Pay must be greater than 0.";
+    if (payMin && payMax && parseFloat(payMax) <= parseFloat(payMin)) e.payMax = "Pay max must be greater than pay min.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!province || !contractLength || roleTypes.length === 0) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+    if (!validate()) return;
     setSubmitting(true);
     setError("");
     try {
@@ -243,7 +257,8 @@ export default function NewListingPage() {
               <>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Title (English) *</label>
-                  <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="e.g. Registered Nurse — Emergency Care" />
+                  <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="e.g. Registered Nurse — Emergency Care" className={errors.titleEn ? "border-destructive" : ""} />
+                  {errors.titleEn && <p className="mt-1 text-xs text-destructive">{errors.titleEn}</p>}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Description (English) *</label>
@@ -251,9 +266,10 @@ export default function NewListingPage() {
                     value={descEn}
                     onChange={(e) => setDescEn(e.target.value)}
                     rows={6}
-                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+                    className={`w-full rounded-md border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y ${errors.descEn ? "border-destructive" : "border-input"}`}
                     placeholder="Describe the role, requirements, and what makes this opportunity special…"
                   />
+                  {errors.descEn && <p className="mt-1 text-xs text-destructive">{errors.descEn}</p>}
                 </div>
               </>
             )}
@@ -261,7 +277,8 @@ export default function NewListingPage() {
               <>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Titre (Français) *</label>
-                  <Input value={titleFr} onChange={(e) => setTitleFr(e.target.value)} placeholder="ex. Infirmière autorisée — Soins d'urgence" />
+                  <Input value={titleFr} onChange={(e) => setTitleFr(e.target.value)} placeholder="ex. Infirmière autorisée — Soins d'urgence" className={errors.titleFr ? "border-destructive" : ""} />
+                  {errors.titleFr && <p className="mt-1 text-xs text-destructive">{errors.titleFr}</p>}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">Description (Français) *</label>
@@ -269,9 +286,10 @@ export default function NewListingPage() {
                     value={descFr}
                     onChange={(e) => setDescFr(e.target.value)}
                     rows={6}
-                    className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+                    className={`w-full rounded-md border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y ${errors.descFr ? "border-destructive" : "border-input"}`}
                     placeholder="Décrivez le poste, les exigences et ce qui rend cette opportunité spéciale…"
                   />
+                  {errors.descFr && <p className="mt-1 text-xs text-destructive">{errors.descFr}</p>}
                 </div>
               </>
             )}
@@ -298,6 +316,7 @@ export default function NewListingPage() {
               </button>
             ))}
           </div>
+          {errors.roleTypes && <p className="mt-2 text-xs text-destructive">{errors.roleTypes}</p>}
         </section>
 
         {/* ── Location ───────────────────────────────────────────── */}
@@ -305,17 +324,19 @@ export default function NewListingPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Location *</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Province / Territory</label>
+              <label className="mb-1 block text-sm font-medium text-foreground">Province / Territory *</label>
               <Select value={province} onValueChange={(v) => setProvince((v ?? "") as Province)}>
-                <SelectTrigger><SelectValue placeholder="Select province" /></SelectTrigger>
+                <SelectTrigger className={errors.province ? "border-destructive" : ""}><SelectValue placeholder="Select province" /></SelectTrigger>
                 <SelectContent>
                   {PROVINCES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.province && <p className="mt-1 text-xs text-destructive">{errors.province}</p>}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Community</label>
-              <Input value={community} onChange={(e) => setCommunity(e.target.value)} placeholder="e.g. Fort Nelson" />
+              <label className="mb-1 block text-sm font-medium text-foreground">Community *</label>
+              <Input value={community} onChange={(e) => setCommunity(e.target.value)} placeholder="e.g. Fort Nelson" className={errors.community ? "border-destructive" : ""} />
+              {errors.community && <p className="mt-1 text-xs text-destructive">{errors.community}</p>}
             </div>
           </div>
         </section>
@@ -327,11 +348,12 @@ export default function NewListingPage() {
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Contract Length *</label>
               <Select value={contractLength} onValueChange={(v) => setContractLength(v ?? "")}>
-                <SelectTrigger><SelectValue placeholder="Select length" /></SelectTrigger>
+                <SelectTrigger className={errors.contractLength ? "border-destructive" : ""}><SelectValue placeholder="Select length" /></SelectTrigger>
                 <SelectContent>
                   {CONTRACT_LENGTHS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.contractLength && <p className="mt-1 text-xs text-destructive">{errors.contractLength}</p>}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Start Date</label>
@@ -339,11 +361,13 @@ export default function NewListingPage() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Pay Min ($/hr)</label>
-              <Input type="number" min={0} value={payMin} onChange={(e) => setPayMin(e.target.value)} placeholder="45" />
+              <Input type="number" min={0} value={payMin} onChange={(e) => setPayMin(e.target.value)} placeholder="45" className={errors.payMin ? "border-destructive" : ""} />
+              {errors.payMin && <p className="mt-1 text-xs text-destructive">{errors.payMin}</p>}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Pay Max ($/hr)</label>
-              <Input type="number" min={0} value={payMax} onChange={(e) => setPayMax(e.target.value)} placeholder="60" />
+              <Input type="number" min={0} value={payMax} onChange={(e) => setPayMax(e.target.value)} placeholder="60" className={errors.payMax ? "border-destructive" : ""} />
+              {errors.payMax && <p className="mt-1 text-xs text-destructive">{errors.payMax}</p>}
             </div>
           </div>
           <div className="mt-4 flex gap-6">
