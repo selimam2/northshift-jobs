@@ -104,7 +104,7 @@ export default function LoginPage() {
             <p className="mt-6 text-center text-xs text-muted-foreground">
               {t("noAccount")}{" "}
               <Link
-                href={`/${locale}`}
+                href={`/${locale}/register`}
                 className="text-primary hover:underline"
               >
                 {t("contactSales")}

@@ -105,6 +105,18 @@ export const api = {
   },
 
   auth: {
+    register(data: {
+      orgName: string;
+      name: string;
+      email: string;
+      password: string;
+    }): Promise<{ token: string }> {
+      return apiFetch("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+
     login(email: string, password: string): Promise<{ token: string }> {
       return apiFetch("/api/auth/login", {
         method: "POST",
