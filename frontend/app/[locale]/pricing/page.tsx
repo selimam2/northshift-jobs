@@ -54,6 +54,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function handleGetStarted(tier: string) {
     const token = localStorage.getItem("ns_token");
@@ -63,10 +64,12 @@ export default function PricingPage() {
     }
 
     setLoading(tier);
+    setError("");
     try {
       const { url } = await api.stripe.createCheckout(tier, isAnnual, token);
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setLoading(null);
     }
   }
@@ -161,7 +164,10 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <p className="mt-10 text-center text-sm text-muted-foreground">{t("trialNote")}</p>
+      {error && (
+        <p className="mt-6 text-center text-sm text-destructive">{error}</p>
+      )}
+      <p className="mt-4 text-center text-sm text-muted-foreground">{t("trialNote")}</p>
     </div>
   );
 }
