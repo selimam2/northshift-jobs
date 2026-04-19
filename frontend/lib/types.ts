@@ -50,10 +50,10 @@ export interface SubmitApplicationRequest {
   listingId: string;
   applicantName: string;
   applicantEmail: string;
-  applicantPhone: string;
+  availabilityDate: string;
   licences: { province: Province; licenceNumber?: string; expiry?: string }[];
-  coverLetter?: string;
-  emailConsent: boolean;
+  coverMessage?: string;
+  consentToAlerts: boolean;
   resumeS3Key?: string;
 }
 
