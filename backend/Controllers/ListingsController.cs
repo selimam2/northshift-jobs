@@ -203,7 +203,7 @@ public class ListingsController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
-    private static string? ValidateLanguageContent(
+    internal static string? ValidateLanguageContent(
         ListingLanguage language, string? titleEn, string? titleFr, string? descEn, string? descFr) =>
         language switch
         {
@@ -217,7 +217,7 @@ public class ListingsController(AppDbContext db) : ControllerBase
             _ => null
         };
 
-    private static string GenerateSlug(string title, string community)
+    internal static string GenerateSlug(string title, string community)
     {
         var raw = $"{title}-{community}-{Guid.NewGuid().ToString("N")[..6]}".ToLowerInvariant();
         return Regex.Replace(raw, @"[^a-z0-9\-]", "-").Trim('-');
