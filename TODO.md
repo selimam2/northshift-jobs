@@ -3,7 +3,7 @@
 ## Priority Queue
 
 - [x] **Cancel subscription** — "Cancel plan" button in dashboard billing section → Stripe portal (portal already supports cancellation, just needs a clear entry point and confirmation copy).
-- [ ] **Change password** — Authenticated flow in dashboard settings: current password + new password + confirm. `POST /api/auth/change-password`.
+- [x] **Change password** — Authenticated flow in dashboard settings: current password + new password + confirm. `POST /api/auth/change-password`.
 - [ ] **Dashboard — listing CRUD** — edit and close listings from the UI (new listing form exists, no list/edit/close).
 - [ ] **Dashboard — applications view** — list, status update, notes, assign to recruiter.
 - [ ] **Dashboard — team management** — invite recruiter, set permissions.
