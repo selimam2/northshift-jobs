@@ -188,6 +188,15 @@ export default function DashboardPage() {
                 >
                   {portalLoading ? "Opening…" : t("manageBilling")}
                 </button>
+                {(billing.status === "Active" || billing.status === "Trialing") && (
+                  <button
+                    onClick={handleManageBilling}
+                    disabled={portalLoading}
+                    className="mt-1.5 w-full rounded-md px-3 py-1.5 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors text-center"
+                  >
+                    Cancel plan
+                  </button>
+                )}
               </div>
             </>
           )}
