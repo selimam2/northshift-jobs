@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, LayoutDashboard, FileText, Users, CreditCard, AlertTriangle, Lock } from "lucide-react";
+import { Plus, LogOut, LayoutDashboard, FileText, Users, CreditCard, AlertTriangle, Lock, Settings } from "lucide-react";
 import { api } from "@/lib/api";
 
 type BillingInfo = {
@@ -144,6 +144,15 @@ export default function DashboardPage() {
           ))}
 
           {/* Billing section in sidebar */}
+          <Separator className="my-3" />
+          <Link
+            href={`/${locale}/dashboard/settings`}
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+
           {billing && (
             <>
               <Separator className="my-3" />

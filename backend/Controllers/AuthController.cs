@@ -152,6 +152,25 @@ public class AuthController(AppDbContext db, TokenService tokenService, EmailSer
         return Ok(new { message = "Password updated. You can now log in." });
     }
 
+    [HttpPost("change-password"), Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest req)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return Unauthorized();
+
+        if (!BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
+            return BadRequest(new { error = "Current password is incorrect." });
+
+        if (req.NewPassword.Length < 8)
+            return BadRequest(new { error = "New password must be at least 8 characters." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Password updated." });
+    }
+
     private static AuthResponse BuildAuthResponse(AppUser user, TokenService tokenService)
     {
         return new AuthResponse

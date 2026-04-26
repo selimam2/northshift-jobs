@@ -137,6 +137,14 @@ export const api = {
         body: JSON.stringify({ token, newPassword }),
       });
     },
+
+    changePassword(currentPassword: string, newPassword: string, token: string): Promise<{ message: string }> {
+      return apiFetch("/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
   },
 
   admin: {
