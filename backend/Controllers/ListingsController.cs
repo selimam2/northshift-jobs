@@ -96,6 +96,64 @@ public class ListingsController(AppDbContext db) : ControllerBase
         return Ok(listing);
     }
 
+    [HttpGet("mine"), Authorize(Roles = "AccountManager,Recruiter")]
+    public async Task<IActionResult> GetMine()
+    {
+        var orgId = Guid.Parse(User.FindFirstValue("org_id")!);
+        var listings = await db.Listings
+            .Where(l => l.OrgId == orgId)
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(l => new
+            {
+                l.Id,
+                l.Slug,
+                l.TitleEn,
+                l.TitleFr,
+                l.Status,
+                l.RoleTypes,
+                l.Province,
+                l.Community,
+                l.ContractLength,
+                l.Language,
+                l.CreatedAt,
+                ApplicationCount = l.Applications.Count
+            })
+            .ToListAsync();
+        return Ok(listings);
+    }
+
+    [HttpGet("mine/{id:guid}"), Authorize(Roles = "AccountManager,Recruiter")]
+    public async Task<IActionResult> GetMineById(Guid id)
+    {
+        var orgId = Guid.Parse(User.FindFirstValue("org_id")!);
+        var listing = await db.Listings
+            .Where(l => l.Id == id && l.OrgId == orgId)
+            .Select(l => new
+            {
+                l.Id,
+                l.Slug,
+                l.TitleEn,
+                l.TitleFr,
+                l.DescriptionEn,
+                l.DescriptionFr,
+                l.Status,
+                l.RoleTypes,
+                l.Province,
+                l.Community,
+                l.ContractLength,
+                l.StartDate,
+                l.PayMin,
+                l.PayMax,
+                l.HousingProvided,
+                l.TravelCovered,
+                l.Language,
+                l.CreatedAt
+            })
+            .FirstOrDefaultAsync();
+        if (listing is null) return NotFound();
+        return Ok(listing);
+    }
+
     [HttpPost, Authorize(Roles = "AccountManager,Recruiter")]
     public async Task<IActionResult> Create(CreateListingRequest req)
     {
@@ -175,6 +233,7 @@ public class ListingsController(AppDbContext db) : ControllerBase
         if (req.StartDate.HasValue) listing.StartDate = req.StartDate;
         if (req.PayMin.HasValue) listing.PayMin = req.PayMin;
         if (req.PayMax.HasValue) listing.PayMax = req.PayMax;
+        if (req.RoleTypes is { Count: > 0 }) listing.RoleTypes = req.RoleTypes;
         if (req.HousingProvided.HasValue) listing.HousingProvided = req.HousingProvided.Value;
         if (req.TravelCovered.HasValue) listing.TravelCovered = req.TravelCovered.Value;
 

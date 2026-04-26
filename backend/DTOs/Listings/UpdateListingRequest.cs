@@ -9,7 +9,7 @@ public class UpdateListingRequest
     public string? DescriptionEn { get; set; }
     public string? DescriptionFr { get; set; }
     public ListingLanguage? Language { get; set; }
-    public RoleType? RoleType { get; set; }
+    public List<RoleType>? RoleTypes { get; set; }
     public Province? Province { get; set; }
     public string? Community { get; set; }
     public string? ContractLength { get; set; }

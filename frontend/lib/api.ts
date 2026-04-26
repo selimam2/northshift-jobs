@@ -3,8 +3,13 @@ import type {
   ListingFilter,
   PagedResult,
   CreateListingRequest,
+  UpdateListingRequest,
   SubmitApplicationRequest,
   SubscribeRequest,
+  MyListing,
+  ApplicationSummary,
+  ApplicationDetail,
+  ApplicationStatus,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -58,6 +63,33 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       });
     },
+
+    listMine(token: string): Promise<MyListing[]> {
+      return apiFetch("/api/listings/mine", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    getById(id: string, token: string): Promise<Listing> {
+      return apiFetch(`/api/listings/mine/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    update(id: string, data: UpdateListingRequest, token: string): Promise<void> {
+      return apiFetch(`/api/listings/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    close(id: string, token: string): Promise<void> {
+      return apiFetch(`/api/listings/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
   },
 
   applications: {
@@ -78,6 +110,41 @@ export const api = {
       return apiFetch(`/api/applications/${listingId}`, {
         method: "POST",
         body: JSON.stringify(data),
+      });
+    },
+
+    getAll(token: string, listingId?: string): Promise<ApplicationSummary[]> {
+      const qs = listingId ? `?listingId=${listingId}` : "";
+      return apiFetch(`/api/applications${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    getById(id: string, token: string): Promise<ApplicationDetail> {
+      return apiFetch(`/api/applications/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    updateStatus(id: string, status: ApplicationStatus, token: string): Promise<void> {
+      return apiFetch(`/api/applications/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    getResumeUrl(id: string, token: string): Promise<{ url: string }> {
+      return apiFetch(`/api/applications/${id}/resume`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    addNote(id: string, body: string, token: string): Promise<void> {
+      return apiFetch(`/api/applications/${id}/notes`, {
+        method: "POST",
+        body: JSON.stringify({ body }),
+        headers: { Authorization: `Bearer ${token}` },
       });
     },
   },

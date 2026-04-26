@@ -74,6 +74,70 @@ export interface CreateListingRequest {
   travelCovered: boolean;
 }
 
+export type ApplicationStatus = "New" | "Reviewed" | "Shortlisted" | "Hired" | "Rejected";
+
+export interface MyListing {
+  id: string;
+  slug: string;
+  titleEn?: string;
+  titleFr?: string;
+  status: ListingStatus;
+  roleTypes: RoleType[];
+  province: Province;
+  community: string;
+  contractLength: string;
+  language: ListingLanguage;
+  createdAt: string;
+  applicationCount: number;
+}
+
+export interface ApplicationSummary {
+  id: string;
+  applicantName: string;
+  applicantEmail: string;
+  status: ApplicationStatus;
+  availabilityDate: string;
+  createdAt: string;
+  assignedTo?: string;
+  listingTitleEn?: string;
+  listingTitleFr?: string;
+  listingId: string;
+}
+
+export interface ApplicationDetail {
+  id: string;
+  applicantName: string;
+  applicantEmail: string;
+  availabilityDate: string;
+  coverMessage?: string;
+  resumeS3Key?: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  assignedTo?: string;
+  listingTitleEn?: string;
+  listingTitleFr?: string;
+  licences: { province: Province; licenceNumber?: string; expiry?: string }[];
+  notes: { id: string; body: string; createdAt: string; writtenBy: string }[];
+  statusLogs: { fromStatus: ApplicationStatus; toStatus: ApplicationStatus; changedAt: string; changedBy: string }[];
+}
+
+export interface UpdateListingRequest {
+  titleEn?: string;
+  titleFr?: string;
+  descriptionEn?: string;
+  descriptionFr?: string;
+  language?: ListingLanguage;
+  roleTypes?: RoleType[];
+  province?: Province;
+  community?: string;
+  contractLength?: string;
+  startDate?: string;
+  payMin?: number;
+  payMax?: number;
+  housingProvided?: boolean;
+  travelCovered?: boolean;
+}
+
 export interface SubscribeRequest {
   email: string;
   languagePref: LanguagePreference;
