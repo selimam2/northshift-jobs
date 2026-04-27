@@ -79,7 +79,7 @@ public class AuthController(AppDbContext db, TokenService tokenService, EmailSer
             Name = req.Name,
             Email = req.Email,
             PasswordHash = string.Empty,
-            Permissions = req.Permissions,
+            Permissions = (RecruiterPermissions)req.Permissions,
             IsActive = false,
             InviteToken = Guid.NewGuid().ToString("N")
         };

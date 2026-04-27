@@ -1,4 +1,3 @@
-using NorthShift.Api.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace NorthShift.Api.DTOs.Auth;
@@ -11,5 +10,5 @@ public class InviteRecruiterRequest
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-    public RecruiterPermissions Permissions { get; set; } = RecruiterPermissions.None;
+    public int Permissions { get; set; } = 0;
 }

@@ -172,10 +172,13 @@ export default function DashboardPage() {
             <LayoutDashboard className="h-4 w-4" />
             {t("applications")}
           </Link>
-          <button className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground">
+          <Link
+            href={`/${locale}/dashboard/team`}
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
             <Users className="h-4 w-4" />
             {t("team")}
-          </button>
+          </Link>
 
           <Separator className="my-3" />
           <Link

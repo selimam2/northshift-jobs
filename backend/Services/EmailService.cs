@@ -128,7 +128,7 @@ public class EmailService(IConfiguration config, ILogger<EmailService> logger, I
             <h2>You're invited!</h2>
             <p>Hi {recruiter.Name},</p>
             <p>You've been invited to join <strong>{org.Name}</strong> as a recruiter on NorthShift Jobs.</p>
-            <p><a href="{config["Frontend:Url"]}/auth/accept-invite?token={recruiter.InviteToken}">Accept your invitation</a></p>
+            <p><a href="{config["Frontend:Url"]}/en/accept-invite?token={recruiter.InviteToken}" style="display:inline-block;padding:10px 20px;background:#0070f3;color:#fff;text-decoration:none;border-radius:6px;">Accept Invitation</a></p>
             <p>This link will expire in 7 days.</p>
             <p>NorthShift Jobs</p>
             """;

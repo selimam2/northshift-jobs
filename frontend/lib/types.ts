@@ -138,6 +138,31 @@ export interface UpdateListingRequest {
   travelCovered?: boolean;
 }
 
+export const PERMISSION_FLAGS = {
+  ViewAllApplications: 1,
+  AssignApplications:  2,
+  ExportApplications:  4,
+  ManageAllListings:   8,
+} as const;
+
+export type PermissionKey = keyof typeof PERMISSION_FLAGS;
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  permissions: number;
+  isActive: boolean;
+  createdAt: string;
+  pendingInvite: boolean;
+}
+
+export interface TeamResponse {
+  members: TeamMember[];
+  quota: number | null;
+  activeCount: number;
+}
+
 export interface SubscribeRequest {
   email: string;
   languagePref: LanguagePreference;

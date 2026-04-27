@@ -10,6 +10,7 @@ import type {
   ApplicationSummary,
   ApplicationDetail,
   ApplicationStatus,
+  TeamResponse,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -209,6 +210,44 @@ export const api = {
       return apiFetch("/api/auth/change-password", {
         method: "POST",
         body: JSON.stringify({ currentPassword, newPassword }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    acceptInvite(inviteToken: string, password: string): Promise<{ token: string }> {
+      return apiFetch("/api/auth/accept-invite", {
+        method: "POST",
+        body: JSON.stringify({ inviteToken, password }),
+      });
+    },
+  },
+
+  team: {
+    getTeam(token: string): Promise<TeamResponse> {
+      return apiFetch("/api/team", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    invite(data: { name: string; email: string; permissions: number }, token: string): Promise<{ message: string }> {
+      return apiFetch("/api/auth/invite", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    updatePermissions(id: string, permissions: number, token: string): Promise<{ message: string }> {
+      return apiFetch(`/api/team/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ permissions }),
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+
+    removeMember(id: string, token: string): Promise<{ message: string }> {
+      return apiFetch(`/api/team/${id}`, {
+        method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
     },
