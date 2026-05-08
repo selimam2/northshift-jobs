@@ -20,5 +20,6 @@ variable "environment" {
 #   aws ssm put-parameter --name /northshift/stripe_secret_key --type SecureString --value "..."
 #   aws ssm put-parameter --name /northshift/resend_api_key    --type SecureString --value "..."
 
-variable "db_name"     { default = "northshift" }
-variable "db_username" { default = "northshift" }
+variable "ssh_public_key" {
+  description = "SSH public key for EC2 access. Generate with: ssh-keygen -t ed25519 -f ~/.ssh/northshift"
+}

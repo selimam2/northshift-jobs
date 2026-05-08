@@ -1,0 +1,64 @@
+services:
+  db:
+    image: docker.io/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: northshift
+      POSTGRES_USER: northshift
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U northshift"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: 674482656393.dkr.ecr.us-east-1.amazonaws.com/northshift-api:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=northshift;Username=northshift;Password=${DB_PASSWORD}"
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: https://api.northshift.ca
+      Jwt__Audience: https://northshift.ca
+      Jwt__ExpiryHours: "24"
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET}
+      Resend__ApiKey: ${RESEND_API_KEY}
+      Resend__FromEmail: hello@northshift.ca
+      Resend__FromName: NorthShift Jobs
+      Frontend__Url: https://northshift.ca
+      AWS__Region: us-east-1
+      AWS__ResumeBucket: northshift-resumes-674482656393
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: 674482656393.dkr.ecr.us-east-1.amazonaws.com/northshift-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+
+  caddy:
+    image: docker.io/caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
