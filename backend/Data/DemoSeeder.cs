@@ -5,6 +5,20 @@ namespace NorthShift.Api.Data;
 
 public static class DemoSeeder
 {
+    public static async Task SeedAdminAsync(AppDbContext db)
+    {
+        const string email = "sami@northshift.ca";
+        if (await db.Set<Admin>().AnyAsync(u => u.Email == email)) return;
+
+        db.Set<Admin>().Add(new Admin
+        {
+            Name         = "Sami El-Imam",
+            Email        = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_ADMIN"),
+        });
+        await db.SaveChangesAsync();
+    }
+
     public static async Task SeedAsync(AppDbContext db)
     {
         // Only seed if no listings exist yet
@@ -49,6 +63,18 @@ public static class DemoSeeder
             OrgId        = orgFr.Id,
         };
         db.Set<AccountManager>().Add(managerFr);
+
+        // ── Test recruiter ────────────────────────────────────────────────────
+        var recruiter = new Recruiter
+        {
+            Id           = Guid.NewGuid(),
+            Name         = "Test Recruiter",
+            Email        = "recruiter@northhealthstaffing.ca",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_RECRUITER"),
+            OrgId        = org.Id,
+            Permissions  = RecruiterPermissions.ViewAllApplications | RecruiterPermissions.ManageAllListings,
+        };
+        db.Set<Recruiter>().Add(recruiter);
 
         // ── Listings ──────────────────────────────────────────────────────────
         var listings = new List<Listing>

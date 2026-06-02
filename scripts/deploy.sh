@@ -7,8 +7,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TARGET="${1:-all}"
 IP=$(terraform -chdir="$REPO_ROOT/terraform" output -raw instance_ip)
-SSH="ssh -o StrictHostKeyChecking=accept-new ec2-user@$IP"
-SCP="scp -o StrictHostKeyChecking=accept-new"
+SSH="ssh -i ~/.ssh/northshift -o StrictHostKeyChecking=accept-new ec2-user@$IP"
+SCP="scp -i ~/.ssh/northshift -o StrictHostKeyChecking=accept-new"
 
 echo "==> Deploying to $IP (target: $TARGET)"
 

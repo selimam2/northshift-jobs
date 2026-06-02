@@ -93,12 +93,10 @@ using (var scope = app.Services.CreateScope())
     var dpDb = scope.ServiceProvider.GetRequiredService<DataProtectionDbContext>();
     dpDb.Database.Migrate();
 
+    await NorthShift.Api.Data.DemoSeeder.SeedAdminAsync(db);
+
     if (app.Environment.IsProduction())
         await NorthShift.Api.Data.DemoSeeder.SeedAsync(db);
-
-    // Ensure sami@northshift.ca is an Admin
-    await db.Database.ExecuteSqlRawAsync(
-        "UPDATE \"Users\" SET \"UserType\" = 'Admin', \"OrgId\" = NULL WHERE \"Email\" = 'sami@northshift.ca' AND \"UserType\" != 'Admin'");
 }
 
 if (app.Environment.IsDevelopment())
