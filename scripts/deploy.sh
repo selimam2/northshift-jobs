@@ -17,19 +17,19 @@ $SCP "$REPO_ROOT/docker-compose.prod.yml"  "ec2-user@$IP:/opt/northshift/docker-
 $SCP "$REPO_ROOT/caddy/Caddyfile"          "ec2-user@$IP:/opt/northshift/caddy/Caddyfile"
 
 # ECR login on the server
-$SSH "aws ecr get-login-password --region us-east-1 | podman login --username AWS --password-stdin 674482656393.dkr.ecr.us-east-1.amazonaws.com"
+$SSH "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 674482656393.dkr.ecr.us-east-1.amazonaws.com"
 
 # Pull only what changed
 case "$TARGET" in
-  api)      $SSH "cd /opt/northshift && podman-compose -p northshift -f docker-compose.prod.yml pull api" ;;
-  frontend) $SSH "cd /opt/northshift && podman-compose -p northshift -f docker-compose.prod.yml pull frontend" ;;
-  *)        $SSH "cd /opt/northshift && podman-compose -p northshift -f docker-compose.prod.yml pull api frontend" ;;
+  api)      $SSH "cd /opt/northshift && docker compose -p northshift -f docker-compose.prod.yml pull api" ;;
+  frontend) $SSH "cd /opt/northshift && docker compose -p northshift -f docker-compose.prod.yml pull frontend" ;;
+  *)        $SSH "cd /opt/northshift && docker compose -p northshift -f docker-compose.prod.yml pull api frontend" ;;
 esac
 
 # Fetch fresh secrets, then bring stack up (creates containers that don't exist, recreates changed ones)
-$SSH "/opt/northshift/fetch-secrets.sh && cd /opt/northshift && podman-compose -p northshift -f docker-compose.prod.yml up -d"
+$SSH "/opt/northshift/fetch-secrets.sh && cd /opt/northshift && docker compose -p northshift -f docker-compose.prod.yml up -d"
 
 # Enable systemd service so stack restarts on reboot (idempotent)
-$SSH "systemctl enable northshift 2>/dev/null || true"
+$SSH "sudo systemctl enable northshift 2>/dev/null || true"
 
 echo "==> Done. Stack is up at https://northshift.ca"

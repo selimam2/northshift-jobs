@@ -1,9 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Install Podman and podman-compose
-dnf install -y podman python3-pip
-pip3 install podman-compose
+# Install Docker (podman is not in AL2023 default repos)
+dnf install -y docker
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+# Docker Compose v2 plugin (not in AL2023 repos — install from GitHub)
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # App directory — compose files are deployed here by scripts/deploy.sh
 mkdir -p /opt/northshift/caddy
@@ -29,16 +36,17 @@ chmod +x /opt/northshift/fetch-secrets.sh
 cat > /etc/systemd/system/northshift.service << 'INNER'
 [Unit]
 Description=NorthShift Application Stack
-After=network-online.target
+After=network-online.target docker.service
 Wants=network-online.target
+Requires=docker.service
 
 [Service]
 Type=forking
 WorkingDirectory=/opt/northshift
 ExecStartPre=/opt/northshift/fetch-secrets.sh
-ExecStartPre=/bin/bash -c 'aws ecr get-login-password --region us-east-1 | podman login --username AWS --password-stdin 674482656393.dkr.ecr.us-east-1.amazonaws.com'
-ExecStart=/usr/local/bin/podman-compose -p northshift -f docker-compose.prod.yml up -d
-ExecStop=/usr/local/bin/podman-compose -p northshift -f docker-compose.prod.yml down
+ExecStartPre=/bin/bash -c 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 674482656393.dkr.ecr.us-east-1.amazonaws.com'
+ExecStart=/usr/bin/docker compose -p northshift -f docker-compose.prod.yml up -d
+ExecStop=/usr/bin/docker compose -p northshift -f docker-compose.prod.yml down
 TimeoutStartSec=300
 
 [Install]

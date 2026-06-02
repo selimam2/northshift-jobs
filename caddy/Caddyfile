@@ -1,5 +1,5 @@
 northshift.ca {
-	reverse_proxy 127.0.0.1:3000
+	reverse_proxy frontend:3000
 }
 
 www.northshift.ca {
@@ -7,5 +7,5 @@ www.northshift.ca {
 }
 
 api.northshift.ca {
-	reverse_proxy 127.0.0.1:8080
+	reverse_proxy api:8080
 }
