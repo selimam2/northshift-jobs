@@ -1,6 +1,6 @@
-# .NET
-backend/bin/
-backend/obj/
+# .NET — any project, not just backend/
+bin/
+obj/
 *.user
 *.suo
 .vs/
