@@ -2,13 +2,10 @@ resource "aws_security_group" "ec2" {
   name   = "northshift-ec2-sg"
   vpc_id = aws_vpc.main.id
 
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # SSH is intentionally not exposed. Use SSM Session Manager, or grant a
+  # temporary rule scoped to a single address when shell access is needed:
+  #   aws ec2 authorize-security-group-ingress --group-id <id> \
+  #     --protocol tcp --port 22 --cidr YOUR.IP/32
   ingress {
     description = "HTTP (Caddy redirect to HTTPS)"
     from_port   = 80

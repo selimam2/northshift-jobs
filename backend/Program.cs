@@ -93,10 +93,12 @@ using (var scope = app.Services.CreateScope())
     var dpDb = scope.ServiceProvider.GetRequiredService<DataProtectionDbContext>();
     dpDb.Database.Migrate();
 
-    await NorthShift.Api.Data.DemoSeeder.SeedAdminAsync(db);
+    // Both seeders are configuration-gated and no-op when unset, so no
+    // credentials live in source. Demo content is development-only.
+    await NorthShift.Api.Data.DemoSeeder.SeedAdminAsync(db, app.Configuration);
 
-    if (app.Environment.IsProduction())
-        await NorthShift.Api.Data.DemoSeeder.SeedAsync(db);
+    if (app.Environment.IsDevelopment())
+        await NorthShift.Api.Data.DemoSeeder.SeedAsync(db, app.Configuration);
 }
 
 if (app.Environment.IsDevelopment())

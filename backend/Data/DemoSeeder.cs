@@ -1,26 +1,42 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NorthShift.Api.Models;
 
 namespace NorthShift.Api.Data;
 
 public static class DemoSeeder
 {
-    public static async Task SeedAdminAsync(AppDbContext db)
+    /// <summary>
+    /// Seeds the initial admin account. No-op unless both Seed:AdminEmail and
+    /// Seed:AdminPassword are configured, so a deployment that does not set them
+    /// never creates a login.
+    /// </summary>
+    public static async Task SeedAdminAsync(AppDbContext db, IConfiguration config)
     {
-        const string email = "sami@northshift.ca";
+        var email    = config["Seed:AdminEmail"];
+        var password = config["Seed:AdminPassword"];
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password)) return;
+
         if (await db.Set<Admin>().AnyAsync(u => u.Email == email)) return;
 
         db.Set<Admin>().Add(new Admin
         {
-            Name         = "Sami El-Imam",
+            Name         = config["Seed:AdminName"] ?? "Administrator",
             Email        = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_ADMIN"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
         });
         await db.SaveChangesAsync();
     }
 
-    public static async Task SeedAsync(AppDbContext db)
+    /// <summary>
+    /// Seeds demonstration content for local development. No-op unless
+    /// Seed:DemoPassword is configured.
+    /// </summary>
+    public static async Task SeedAsync(AppDbContext db, IConfiguration config)
     {
+        var demoPassword = config["Seed:DemoPassword"];
+        if (string.IsNullOrWhiteSpace(demoPassword)) return;
+
         // Only seed if no listings exist yet
         if (await db.Listings.AnyAsync()) return;
 
@@ -49,7 +65,7 @@ public static class DemoSeeder
             Id           = Guid.NewGuid(),
             Name         = "Alex Turner",
             Email        = "demo@northhealthstaffing.ca",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_DEMO"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
             OrgId        = org.Id,
         };
         db.Set<AccountManager>().Add(manager);
@@ -59,7 +75,7 @@ public static class DemoSeeder
             Id           = Guid.NewGuid(),
             Name         = "Marie Tremblay",
             Email        = "marie@soinsnordiques.ca",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_DEMO"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
             OrgId        = orgFr.Id,
         };
         db.Set<AccountManager>().Add(managerFr);
@@ -70,7 +86,7 @@ public static class DemoSeeder
             Id           = Guid.NewGuid(),
             Name         = "Test Recruiter",
             Email        = "recruiter@northhealthstaffing.ca",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CHANGE_ME_RECRUITER"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
             OrgId        = org.Id,
             Permissions  = RecruiterPermissions.ViewAllApplications | RecruiterPermissions.ManageAllListings,
         };
